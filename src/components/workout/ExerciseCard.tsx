@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { type Exercise } from "@/data/workoutData";
+import { getLatestWeight, saveWeight } from "@/lib/storage";
 
 interface ExerciseCardProps {
   exercise: Exercise;
@@ -28,6 +29,24 @@ export function ExerciseCard({
 
   const restSeconds = parseInt(exercise.rest) || 60;
 
+  const latest = getLatestWeight(exercise.id);
+  const [weightInput, setWeightInput] = useState(latest?.weight?.toString() || "");
+  const [showWeightSaved, setShowWeightSaved] = useState(false);
+
+  const handleSaveWeight = () => {
+    const w = parseFloat(weightInput);
+    if (isNaN(w) || w <= 0) return;
+    saveWeight({
+      exerciseId: exercise.id,
+      weight: w,
+      unit: "kg",
+      reps: exercise.reps,
+      date: new Date().toISOString().split("T")[0],
+    });
+    setShowWeightSaved(true);
+    setTimeout(() => setShowWeightSaved(false), 1500);
+  };
+
   return (
     <div className="bg-bg2 border border-border rounded-lg mb-[10px] overflow-hidden">
       <div
@@ -48,6 +67,9 @@ export function ExerciseCard({
           <div className="text-[14px] font-medium text-foreground leading-tight">{exercise.name}</div>
           <div className="text-[11px] text-muted-foreground mt-[2px]">{exercise.muscle}</div>
         </div>
+        {latest && (
+          <span className="text-[11px] font-mono text-primary/70 flex-shrink-0">{latest.weight}kg</span>
+        )}
         <div className={`text-muted-foreground text-[16px] flex-shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}>
           ▾
         </div>
@@ -86,6 +108,27 @@ export function ExerciseCard({
           >
             <div className="px-[14px] pb-[14px] border-t border-border mt-1 pt-3">
               <p className="text-[13px] text-muted-foreground leading-[1.7]">{exercise.description}</p>
+
+              {/* Weight input */}
+              <div className="flex items-center gap-2 mt-3 bg-bg4 rounded-sm p-2">
+                <span className="text-[11px] text-muted-foreground">Carga:</span>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  value={weightInput}
+                  onChange={(e) => setWeightInput(e.target.value)}
+                  placeholder="0"
+                  className="w-16 bg-bg3 border border-border rounded-[6px] px-2 py-1 text-[14px] font-mono text-foreground text-center outline-none focus:border-primary transition-colors"
+                />
+                <span className="text-[11px] text-muted-foreground">kg</span>
+                <button
+                  onClick={handleSaveWeight}
+                  className="ml-auto text-[11px] bg-primary/20 text-primary border border-primary/30 rounded-[6px] px-3 py-1 font-medium transition-colors hover:bg-primary/30"
+                >
+                  {showWeightSaved ? "✓ Salvo" : "Salvar"}
+                </button>
+              </div>
+
               <div className="grid grid-cols-[repeat(auto-fill,minmax(48px,1fr))] gap-[6px] mt-3">
                 {sets.map((done, idx) => (
                   <button

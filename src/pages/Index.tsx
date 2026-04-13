@@ -1,7 +1,8 @@
-import { useState, useMemo } from "react";
+import { useState, useCallback } from "react";
 import { trainingDays } from "@/data/workoutData";
 import { useWorkoutState } from "@/hooks/useWorkoutState";
-import { useRestTimer, parseRestTime } from "@/hooks/useRestTimer";
+import { useRestTimer } from "@/hooks/useRestTimer";
+import { saveSession } from "@/lib/storage";
 import { TopBar } from "@/components/workout/TopBar";
 import { DayNav } from "@/components/workout/DayNav";
 import { HeroCard } from "@/components/workout/HeroCard";
@@ -10,6 +11,8 @@ import { BottomNav } from "@/components/workout/BottomNav";
 import { RestTimerOverlay } from "@/components/workout/RestTimerOverlay";
 import { ProgressionPage } from "@/components/workout/ProgressionPage";
 import { ProfilePage } from "@/components/workout/ProfilePage";
+import { HistoryPage } from "@/components/workout/HistoryPage";
+import { EvolutionPage } from "@/components/workout/EvolutionPage";
 
 const getTodayDayIndex = () => {
   const map: Record<number, number> = { 0: 6, 1: 0, 2: 1, 3: 2, 4: 3, 5: 4, 6: 5 };
@@ -25,14 +28,29 @@ const Index = () => {
   const day = trainingDays[currentDay];
   const progress = workout.getDayProgress(currentDay, day.exercises);
 
-  const handleSetComplete = (restSeconds: number) => {
+  // Auto-save session when exercises are completed
+  const handleSetComplete = useCallback((restSeconds: number) => {
     timer.startTimer(restSeconds);
-  };
+    // Save session progress
+    const completedCount = day.exercises.filter(ex =>
+      workout.isExerciseDone(ex.id, ex.sets)
+    ).length;
+    if (completedCount > 0) {
+      saveSession({
+        date: new Date().toISOString().split("T")[0],
+        dayIndex: day.dayIndex,
+        dayTitle: day.title,
+        exercisesCompleted: completedCount,
+        totalExercises: day.exercises.length,
+        weights: {},
+      });
+    }
+  }, [timer, day, workout]);
 
   return (
     <div className="flex flex-col h-full bg-background">
       <TopBar />
-      
+
       {currentPage === "treino" && (
         <DayNav currentDay={currentDay} onDayChange={setCurrentDay} />
       )}
@@ -106,6 +124,8 @@ const Index = () => {
           </>
         )}
 
+        {currentPage === "historico" && <HistoryPage />}
+        {currentPage === "evolucao" && <EvolutionPage />}
         {currentPage === "prog" && <ProgressionPage />}
         {currentPage === "perfil" && <ProfilePage />}
       </div>
