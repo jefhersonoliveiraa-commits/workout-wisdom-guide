@@ -5,6 +5,8 @@ interface BottomNavProps {
 
 const navItems = [
   { id: "treino", icon: "🏋️", label: "Treino" },
+  { id: "historico", icon: "📅", label: "Histórico" },
+  { id: "evolucao", icon: "📊", label: "Evolução" },
   { id: "prog", icon: "📈", label: "Progressão" },
   { id: "perfil", icon: "👤", label: "Perfil" },
 ];
@@ -16,12 +18,12 @@ export function BottomNav({ currentPage, onPageChange }: BottomNavProps) {
         <button
           key={item.id}
           onClick={() => onPageChange(item.id)}
-          className={`flex-1 flex flex-col items-center py-[10px] pb-3 gap-1 bg-transparent border-none transition-colors duration-150 ${
+          className={`flex-1 flex flex-col items-center py-[8px] pb-[10px] gap-[2px] bg-transparent border-none transition-colors duration-150 ${
             currentPage === item.id ? "text-primary" : "text-muted-foreground"
           }`}
         >
-          <span className="text-[20px] leading-none">{item.icon}</span>
-          <span className="text-[10px] font-medium">{item.label}</span>
+          <span className="text-[18px] leading-none">{item.icon}</span>
+          <span className="text-[9px] font-medium">{item.label}</span>
         </button>
       ))}
     </div>
