@@ -1,8 +1,9 @@
-import { useState, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { trainingDays } from "@/data/workoutData";
 import { useWorkoutState } from "@/hooks/useWorkoutState";
 import { useRestTimer } from "@/hooks/useRestTimer";
 import { saveSession } from "@/lib/storage";
+import { shouldPromptWeighIn, wasDismissedToday, dismissWeighInPrompt } from "@/lib/bodyWeight";
 import { TopBar } from "@/components/workout/TopBar";
 import { DayNav } from "@/components/workout/DayNav";
 import { HeroCard } from "@/components/workout/HeroCard";
@@ -13,6 +14,7 @@ import { ProgressionPage } from "@/components/workout/ProgressionPage";
 import { ProfilePage } from "@/components/workout/ProfilePage";
 import { HistoryPage } from "@/components/workout/HistoryPage";
 import { EvolutionPage } from "@/components/workout/EvolutionPage";
+import { WeighInModal } from "@/components/workout/WeighInModal";
 
 const getTodayDayIndex = () => {
   const map: Record<number, number> = { 0: 6, 1: 0, 2: 1, 3: 2, 4: 3, 5: 4, 6: 5 };
@@ -24,14 +26,22 @@ const Index = () => {
   const [currentPage, setCurrentPage] = useState("treino");
   const workout = useWorkoutState();
   const timer = useRestTimer();
+  const [showWeighIn, setShowWeighIn] = useState(false);
+
+  // Check if we should prompt for weigh-in
+  useEffect(() => {
+    if (shouldPromptWeighIn() && !wasDismissedToday()) {
+      // Small delay so it doesn't appear instantly
+      const timeout = setTimeout(() => setShowWeighIn(true), 2000);
+      return () => clearTimeout(timeout);
+    }
+  }, []);
 
   const day = trainingDays[currentDay];
   const progress = workout.getDayProgress(currentDay, day.exercises);
 
-  // Auto-save session when exercises are completed
   const handleSetComplete = useCallback((restSeconds: number) => {
     timer.startTimer(restSeconds);
-    // Save session progress
     const completedCount = day.exercises.filter(ex =>
       workout.isExerciseDone(ex.id, ex.sets)
     ).length;
@@ -46,6 +56,11 @@ const Index = () => {
       });
     }
   }, [timer, day, workout]);
+
+  const handleDismissWeighIn = () => {
+    dismissWeighInPrompt();
+    setShowWeighIn(false);
+  };
 
   return (
     <div className="flex flex-col h-full bg-background">
@@ -127,7 +142,7 @@ const Index = () => {
         {currentPage === "historico" && <HistoryPage />}
         {currentPage === "evolucao" && <EvolutionPage />}
         {currentPage === "prog" && <ProgressionPage />}
-        {currentPage === "perfil" && <ProfilePage />}
+        {currentPage === "perfil" && <ProfilePage onOpenWeighIn={() => setShowWeighIn(true)} />}
       </div>
 
       <RestTimerOverlay
@@ -139,6 +154,12 @@ const Index = () => {
       />
 
       <BottomNav currentPage={currentPage} onPageChange={setCurrentPage} />
+
+      <WeighInModal
+        isOpen={showWeighIn}
+        onClose={() => setShowWeighIn(false)}
+        onDismiss={handleDismissWeighIn}
+      />
     </div>
   );
 };
