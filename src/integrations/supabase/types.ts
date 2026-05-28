@@ -14,16 +14,196 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      exercises: {
+        Row: {
+          created_at: string
+          day_id: string
+          description: string | null
+          external_exercise_id: string | null
+          id: string
+          muscle: string | null
+          name: string
+          reps: string
+          rest: string
+          rir: string | null
+          sets: number
+          sort_order: number
+          suggested_load: number | null
+          technique: string | null
+          warnings: string[] | null
+        }
+        Insert: {
+          created_at?: string
+          day_id: string
+          description?: string | null
+          external_exercise_id?: string | null
+          id?: string
+          muscle?: string | null
+          name?: string
+          reps?: string
+          rest?: string
+          rir?: string | null
+          sets?: number
+          sort_order?: number
+          suggested_load?: number | null
+          technique?: string | null
+          warnings?: string[] | null
+        }
+        Update: {
+          created_at?: string
+          day_id?: string
+          description?: string | null
+          external_exercise_id?: string | null
+          id?: string
+          muscle?: string | null
+          name?: string
+          reps?: string
+          rest?: string
+          rir?: string | null
+          sets?: number
+          sort_order?: number
+          suggested_load?: number | null
+          technique?: string | null
+          warnings?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exercises_day_id_fkey"
+            columns: ["day_id"]
+            isOneToOne: false
+            referencedRelation: "training_days"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          full_name: string
+          height_m: number | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string
+          height_m?: number | null
+          id: string
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          created_at?: string
+          full_name?: string
+          height_m?: number | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: []
+      }
+      training_days: {
+        Row: {
+          color_class: string
+          created_at: string
+          day_index: number
+          day_label: string
+          estimated_time: string | null
+          id: string
+          is_rest: boolean
+          plan_id: string
+          short_label: string
+          sort_order: number
+          tags: string[] | null
+          title: string
+          warning_text: string | null
+          warning_title: string | null
+        }
+        Insert: {
+          color_class?: string
+          created_at?: string
+          day_index?: number
+          day_label?: string
+          estimated_time?: string | null
+          id?: string
+          is_rest?: boolean
+          plan_id: string
+          short_label?: string
+          sort_order?: number
+          tags?: string[] | null
+          title?: string
+          warning_text?: string | null
+          warning_title?: string | null
+        }
+        Update: {
+          color_class?: string
+          created_at?: string
+          day_index?: number
+          day_label?: string
+          estimated_time?: string | null
+          id?: string
+          is_rest?: boolean
+          plan_id?: string
+          short_label?: string
+          sort_order?: number
+          tags?: string[] | null
+          title?: string
+          warning_text?: string | null
+          warning_title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_days_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "workout_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workout_plans: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          student_id: string
+          trainer_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          student_id: string
+          trainer_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          student_id?: string
+          trainer_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      current_role_is: {
+        Args: { _role: Database["public"]["Enums"]["app_role"] }
+        Returns: boolean
+      }
+      day_plan_id: { Args: { _day_id: string }; Returns: string }
+      is_plan_student: { Args: { _plan_id: string }; Returns: boolean }
+      is_plan_trainer: { Args: { _plan_id: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "trainer" | "student"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +330,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["trainer", "student"],
+    },
   },
 } as const
