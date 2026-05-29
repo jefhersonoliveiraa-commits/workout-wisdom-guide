@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      body_weight_logs: {
+        Row: {
+          bmi: number | null
+          created_at: string
+          id: string
+          log_date: string
+          student_id: string
+          weight_kg: number
+        }
+        Insert: {
+          bmi?: number | null
+          created_at?: string
+          id?: string
+          log_date: string
+          student_id: string
+          weight_kg: number
+        }
+        Update: {
+          bmi?: number | null
+          created_at?: string
+          id?: string
+          log_date?: string
+          student_id?: string
+          weight_kg?: number
+        }
+        Relationships: []
+      }
       exercises: {
         Row: {
           created_at: string
@@ -158,6 +185,78 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      training_sessions: {
+        Row: {
+          created_at: string
+          day_index: number
+          day_title: string
+          exercises_completed: number
+          id: string
+          plan_id: string | null
+          session_date: string
+          student_id: string
+          total_exercises: number
+        }
+        Insert: {
+          created_at?: string
+          day_index: number
+          day_title?: string
+          exercises_completed?: number
+          id?: string
+          plan_id?: string | null
+          session_date: string
+          student_id: string
+          total_exercises?: number
+        }
+        Update: {
+          created_at?: string
+          day_index?: number
+          day_title?: string
+          exercises_completed?: number
+          id?: string
+          plan_id?: string | null
+          session_date?: string
+          student_id?: string
+          total_exercises?: number
+        }
+        Relationships: []
+      }
+      workout_logs: {
+        Row: {
+          created_at: string
+          exercise_id: string
+          id: string
+          log_date: string
+          observation: string | null
+          plan_id: string | null
+          sets_data: Json
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          exercise_id: string
+          id?: string
+          log_date: string
+          observation?: string | null
+          plan_id?: string | null
+          sets_data?: Json
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          exercise_id?: string
+          id?: string
+          log_date?: string
+          observation?: string | null
+          plan_id?: string | null
+          sets_data?: Json
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       workout_plans: {
         Row: {
