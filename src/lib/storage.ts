@@ -46,40 +46,6 @@ export async function getExerciseSessions(exerciseId: string, studentId: string)
   if (!data) return [];
   return data.map(row => ({ exerciseId, date: row.log_date, sets: (row.sets_data as unknown as SetLog[]) ?? [], observation: row.observation ?? '' }));
 }
-export async function saveObservation(exerciseId: string, observation: string, studentId: string) {
-  const date = today();
-  await supabase.from('workout_logs').upsert({ student_id: studentId, exercise_id: exerciseId, log_date: date, sets_data: [], observation }, { onConflict: 'student_id,exercise_id,log_date', ignoreDuplicates: false });
-}
-export async function getTodaySession(exerciseId: string, studentId: string): Promise<ExerciseSession | null> {
-  const { data } = await supabase.from('workout_logs').select('sets_data, observation').eq('student_id', studentId).eq('exercise_id', exerciseId).eq('log_date', today()).maybeSingle();
-  if (!data) return null;
-  return { exerciseId, date: today(), sets: (data.sets_data as SetLog[]) ?? [], observation: data.observation ?? '' };
-}
-export async function getLastSession(exerciseId: string, studentId: string): Promise<ExerciseSession | null> {
-  const { data } = await supabase.from('workout_logs').select('sets_data, log_date, observation').eq('student_id', studentId).eq('exercise_id', exerciseId).order('log_date', { ascending: false }).limit(1).maybeSingle();
-  if (!data) return null;
-  return { exerciseId, date: data.log_date, sets: (data.sets_data as SetLog[]) ?? [], observation: data.observation ?? '' };
-}
-export async function getTopSetHistory(exerciseId: string, studentId: string): Promise<{ date: string; weight: number; reps: number }[]> {
-  const { data } = await supabase.from('workout_logs').select('sets_data, log_date').eq('student_id', studentId).eq('exercise_id', exerciseId).order('log_date', { ascending: true });
-  if (!data) return [];
-  return data.map(row => {
-    const valid = ((row.sets_data as SetLog[]) ?? []).filter(s => s.weight > 0);
-    if (!valid.length) return null;
-    const top = valid.reduce((a, b) => b.weight > a.weight ? b : a);
-    return { date: row.log_date, weight: top.weight, reps: top.reps };
-  }).filter((x): x is { date: string; weight: number; reps: number } => x !== null);
-}
-export async function getVolumeHistory(exerciseId: string, studentId: string): Promise<{ date: string; volume: number }[]> {
-  const { data } = await supabase.from('workout_logs').select('sets_data, log_date').eq('student_id', studentId).eq('exercise_id', exerciseId).order('log_date', { ascending: true });
-  if (!data) return [];
-  return data.map(row => ({ date: row.log_date, volume: ((row.sets_data as SetLog[]) ?? []).reduce((sum, s) => sum + s.weight * s.reps, 0) })).filter(s => s.volume > 0);
-}
-export async function getExerciseSessions(exerciseId: string, studentId: string): Promise<ExerciseSession[]> {
-  const { data } = await supabase.from('workout_logs').select('sets_data, log_date, observation').eq('student_id', studentId).eq('exercise_id', exerciseId).order('log_date', { ascending: false });
-  if (!data) return [];
-  return data.map(row => ({ exerciseId, date: row.log_date, sets: (row.sets_data as SetLog[]) ?? [], observation: row.observation ?? '' }));
-}
 export async function loadHistory(studentId: string): Promise<TrainingSession[]> {
   const { data } = await supabase.from('training_sessions').select('*').eq('student_id', studentId).order('session_date', { ascending: false });
   if (!data) return [];
