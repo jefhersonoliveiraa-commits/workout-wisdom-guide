@@ -40,7 +40,7 @@ export async function searchExercises(term: string): Promise<ExerciseSuggestion[
   if (q.length < 2) return [];
 
   const apiKey = import.meta.env.VITE_RAPIDAPI_KEY;
-  if (!apiKey || apiKey === 'sua_chave_aqui') {
+  if (!apiKey || apiKey === '0623dde6b1msh3ca327ac3342d18p10504ajsn21bd8aecaa68') {
     console.error("Erro: VITE_RAPIDAPI_KEY não configurada no arquivo .env");
     return [];
   }
