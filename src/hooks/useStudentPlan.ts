@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import type { DbWorkoutPlan } from '@/types/plan';
 
 async function fetchStudentPlan(studentId: string): Promise<DbWorkoutPlan | null> {
-  const { data: plan, error } = await supabase.from('workout_plans').select('*').eq('student_id', studentId).eq('is_active', true).order('created_at', { ascending: false }).limit(1).single();
+  const { data: plan, error } = await supabase.from('workout_plans').select('*').eq('student_id', studentId).eq('is_active', true).order('created_at', { ascending: false }).limit(1).maybeSingle();
   if (error || !plan) return null;
   const { data: days } = await supabase.from('training_days').select('*').eq('plan_id', plan.id).order('sort_order', { ascending: true });
   if (!days) return { ...plan, training_days: [] } as unknown as DbWorkoutPlan;
