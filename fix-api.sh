@@ -1,9 +1,3 @@
-#!/usr/bin/env bash
-set -e
-
-echo "Aplicando a integração com ExerciseDB e traduções..."
-
-# Reescreve o arquivo exerciseApi.ts com a nova lógica
 cat << 'EOF' > src/lib/exerciseApi.ts
 export interface ExerciseSuggestion {
   id: string;
@@ -18,7 +12,8 @@ const MUSCLES_PT: Record<string, string> = {
   'delts': 'Ombros', 'forearms': 'Antebraços', 'glutes': 'Glúteos',
   'hamstrings': 'Posterior de Coxa', 'lats': 'Dorsais', 'levator scapulae': 'Pescoço',
   'pectorals': 'Peitoral', 'quads': 'Quadríceps', 'serratus anterior': 'Serrátil',
-  'spine': 'Lombar', 'traps': 'Trapézio', 'triceps': 'Tríceps'
+  'spine': 'Lombar', 'traps': 'Trapézio', 'triceps': 'Tríceps',
+  'upper back': 'Costas', 'back': 'Costas', 'chest': 'Peito'
 };
 
 async function translateText(text: string, from: 'pt' | 'en', to: 'pt' | 'en'): Promise<string> {
@@ -30,7 +25,6 @@ async function translateText(text: string, from: 'pt' | 'en', to: 'pt' | 'en'): 
     }
     return text;
   } catch (error) {
-    console.error('Erro ao traduzir:', error);
     return text;
   }
 }
@@ -41,8 +35,7 @@ export async function searchExercises(term: string): Promise<ExerciseSuggestion[
 
   const apiKey = import.meta.env.VITE_RAPIDAPI_KEY;
   if (!apiKey || apiKey === '0623dde6b1msh3ca327ac3342d18p10504ajsn21bd8aecaa68') {
-    console.error("Erro: VITE_RAPIDAPI_KEY não configurada no arquivo .env");
-    return [];
+    return [{ id: `custom_${Date.now()}`, name: term, category: 'Personalizado (Sem API Key)', image: null }];
   }
 
   const cacheKey = `exdb:${q.toLowerCase()}`;
@@ -51,12 +44,23 @@ export async function searchExercises(term: string): Promise<ExerciseSuggestion[
     try { return JSON.parse(cached) as ExerciseSuggestion[]; } catch {}
   }
 
-  try {
-    let searchEn = await translateText(q, 'pt', 'en');
-    if (searchEn.toLowerCase().includes('supine')) searchEn = 'bench press';
+  let results: ExerciseSuggestion[] = [];
 
+  try {
+    // A. Tradução PT -> EN
+    let searchEn = await translateText(q, 'pt', 'en');
+    const sl = searchEn.toLowerCase();
+    
+    // Ajustes para as palavras que o tradutor erra com mais frequência
+    if (sl.includes('supine')) searchEn = 'bench press';
+    if (sl.includes('squat') || sl.includes('agachamento')) searchEn = 'squat';
+    if (sl.includes('deadlift')) searchEn = 'deadlift';
+    if (sl.includes('pulley') || sl.includes('pulldown')) searchEn = 'pulldown';
+    if (sl.includes('leg press')) searchEn = 'leg press';
+
+    // B. Busca Exercise DB (Sem o limit na URL para evitar o erro de 6 bytes)
     const res = await fetch(
-      `https://exercisedb.p.rapidapi.com/exercises/name/${encodeURIComponent(searchEn)}?limit=10`, 
+      `https://exercisedb.p.rapidapi.com/exercises/name/${encodeURIComponent(searchEn)}`, 
       {
         method: 'GET',
         headers: {
@@ -66,28 +70,49 @@ export async function searchExercises(term: string): Promise<ExerciseSuggestion[
       }
     );
 
-    if (!res.ok) return [];
-    const exercises = await res.json();
+    if (res.ok) {
+      // Pega como texto puro para evitar o crash caso o Json retorne vazio/quebrado
+      const textData = await res.text();
+      let exercises = [];
+      try {
+        exercises = JSON.parse(textData);
+      } catch (e) {
+        console.error("A API retornou um formato inesperado:", textData);
+      }
 
-    const results: ExerciseSuggestion[] = await Promise.all(exercises.map(async (ex: any) => {
-      const translatedName = await translateText(ex.name, 'en', 'pt');
-      const targetMuscle = MUSCLES_PT[ex.target] || ex.target;
-
-      return {
-        id: ex.id,
-        name: translatedName.charAt(0).toUpperCase() + translatedName.slice(1),
-        category: targetMuscle,
-        image: ex.gifUrl
-      };
-    }));
-
-    sessionStorage.setItem(cacheKey, JSON.stringify(results));
-    return results;
-
+      if (Array.isArray(exercises) && exercises.length > 0) {
+        // Aplica o limite por código JavaScript
+        const limitedExercises = exercises.slice(0, 15);
+        
+        results = await Promise.all(limitedExercises.map(async (ex: any) => {
+          const translatedName = await translateText(ex.name, 'en', 'pt');
+          const targetMuscle = MUSCLES_PT[ex.target] || ex.target;
+          return {
+            id: ex.id,
+            name: translatedName.charAt(0).toUpperCase() + translatedName.slice(1),
+            category: targetMuscle,
+            image: ex.gifUrl || null
+          };
+        }));
+      }
+    }
   } catch (error) {
-    console.error("Erro geral na busca de exercícios:", error);
-    return [];
+    console.error("Erro na busca de exercícios:", error);
   }
+
+  // C. O SEGREDO DO SUCESSO: Se a lista estiver vazia, injeta a opção personalizada!
+  const exactMatch = results.some(r => r.name.toLowerCase() === q.toLowerCase());
+  if (!exactMatch) {
+    results.push({
+      id: `custom_${Date.now()}`,
+      name: term, 
+      category: 'Exercício Personalizado',
+      image: null
+    });
+  }
+
+  sessionStorage.setItem(cacheKey, JSON.stringify(results));
+  return results;
 }
 
 export function youtubeSearchUrl(name: string): string {
@@ -97,10 +122,4 @@ export function youtubeSearchUrl(name: string): string {
 }
 EOF
 
-# Verifica se a chave já existe no .env, se não existir, ele adiciona
-if ! grep -q "VITE_RAPIDAPI_KEY" .env 2>/dev/null; then
-    echo -e "\nVITE_RAPIDAPI_KEY=sua_chave_aqui" >> .env
-    echo "🔑 Variável VITE_RAPIDAPI_KEY adicionada ao seu arquivo .env!"
-fi
-
-echo "✅ Arquivo exerciseApi.ts atualizado com sucesso!"
+echo "✅ Integração robusa com ExerciseDB aplicada!"
