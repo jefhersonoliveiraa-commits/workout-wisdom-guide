@@ -16,6 +16,11 @@ interface StudentInfo {
   lastSession: string | null;
 }
 
+interface ProfileInfo {
+  id: string;
+  full_name: string;
+}
+
 async function fetchStudents(trainerId: string): Promise<StudentInfo[]> {
   const { data: links } = await supabase
     .from('trainer_student')
@@ -51,10 +56,20 @@ async function fetchStudents(trainerId: string): Promise<StudentInfo[]> {
   }));
 }
 
+async function fetchAllStudentProfiles(): Promise<ProfileInfo[]> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, full_name')
+    .eq('role', 'student');
+  if (error) return [];
+  return data ?? [];
+}
+
 export default function TrainerDashboard() {
   const { user } = useAuth();
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviting, setInviting] = useState(false);
+  const [inviteId, setInviteId] = useState("");
+  const [linking, setLinking] = useState(false);
+  const [linkingId, setLinkingId] = useState<string | null>(null);
 
   const { data: students = [], refetch } = useQuery({
     queryKey: ['trainer-students', user?.id],
@@ -62,36 +77,19 @@ export default function TrainerDashboard() {
     enabled: !!user?.id,
   });
 
-  const handleInvite = async () => {
-    if (!inviteEmail.trim() || !user?.id) return;
-    setInviting(true);
+  const { data: allStudentProfiles = [] } = useQuery({
+    queryKey: ['all-student-profiles'],
+    queryFn: fetchAllStudentProfiles,
+    enabled: !!user?.id,
+  });
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('id, role')
-      .eq('id', (
-        await supabase.rpc('get_user_id_by_email', { email: inviteEmail.trim() })
-      ).data)
-      .single();
-
-    // Simpler: search by auth metadata — use a Supabase function or just link by looking up profiles
-    // For now: find student profile by doing a lookup via a search
-    const { data: found } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('role', 'student')
-      .ilike('id', '%'); // placeholder — in production use a proper lookup
-
-    // Direct approach: find student by email via auth.users lookup (requires service role)
-    // Instead, let's use the email stored in auth — we need an RPC or admin SDK
-    // For MVP: trainer enters student UUID or we use a public invitation flow
-    // Here we'll match by searching profiles linked to auth email
-    toast.info('Convite por email requer configuração de RPC no Supabase. Por enquanto, use o ID do aluno.');
-    setInviting(false);
-  };
+  const linkedIds = new Set(students.map(s => s.id));
+  const availableStudents = allStudentProfiles.filter(p => !linkedIds.has(p.id));
 
   const handleLinkById = async (studentId: string) => {
     if (!user?.id || !studentId.trim()) return;
+    setLinking(true);
+    setLinkingId(studentId);
     const { error } = await supabase.from('trainer_student').insert({
       trainer_id: user.id,
       student_id: studentId.trim(),
@@ -101,60 +99,61 @@ export default function TrainerDashboard() {
     } else {
       toast.success('Aluno vinculado com sucesso!');
       refetch();
-      setInviteEmail("");
+      setInviteId("");
     }
+    setLinking(false);
+    setLinkingId(null);
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <TrainerNav />
-
       <div className="flex-1 overflow-y-auto p-4 max-w-2xl mx-auto w-full">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-[20px] font-semibold text-foreground">Meus Alunos</h1>
           <Link to="/trainer/plans/new">
-            <Button size="sm" className="gap-1.5">
-              <Plus size={14} />
-              Nova Ficha
-            </Button>
+            <Button size="sm" className="gap-1.5"><Plus size={14} />Nova Ficha</Button>
           </Link>
         </div>
 
+        {/* Vincular por ID manual */}
         <div className="bg-bg2 border border-border rounded-lg p-4 mb-6">
           <div className="text-[12px] font-semibold text-foreground mb-2 flex items-center gap-1.5">
-            <UserPlus size={14} />
-            Vincular Aluno (por ID)
+            <UserPlus size={14} />Vincular Aluno (por ID)
           </div>
           <p className="text-[11px] text-muted-foreground mb-3">
             O aluno deve se cadastrar primeiro e compartilhar seu ID de usuário com você.
           </p>
           <div className="flex gap-2">
             <Input
-              value={inviteEmail}
-              onChange={(e) => setInviteEmail(e.target.value)}
+              value={inviteId}
+              onChange={(e) => setInviteId(e.target.value)}
               placeholder="ID do aluno (UUID)"
               className="flex-1 text-[13px]"
             />
             <Button
               size="sm"
-              onClick={() => handleLinkById(inviteEmail)}
-              disabled={inviting || !inviteEmail.trim()}
+              onClick={() => handleLinkById(inviteId)}
+              disabled={linking || !inviteId.trim()}
             >
               Vincular
             </Button>
           </div>
+          <p className="text-[11px] text-muted-foreground mt-2">
+            Para encontrar seu ID: o aluno deve ir em <span className="font-medium">Perfil &gt; copiar ID de usuário</span>.
+          </p>
         </div>
 
+        {/* Alunos vinculados */}
+        <h2 className="text-[15px] font-semibold text-foreground mb-3">Alunos Vinculados</h2>
         {students.length === 0 ? (
-          <div className="bg-bg2 border border-border rounded-lg p-8 text-center">
+          <div className="bg-bg2 border border-border rounded-lg p-8 text-center mb-6">
             <div className="text-[40px] mb-3">👥</div>
             <h3 className="text-[16px] font-medium text-foreground mb-2">Nenhum aluno ainda</h3>
-            <p className="text-[13px] text-muted-foreground">
-              Vincule alunos usando o ID deles acima para começar a gerenciar fichas.
-            </p>
+            <p className="text-[13px] text-muted-foreground">Vincule alunos usando o ID deles acima ou na seção abaixo.</p>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-2 mb-6">
             {students.map(student => (
               <Link
                 key={student.id}
@@ -175,6 +174,38 @@ export default function TrainerDashboard() {
               </Link>
             ))}
           </div>
+        )}
+
+        {/* Alunos disponíveis para vincular */}
+        {availableStudents.length > 0 && (
+          <>
+            <h2 className="text-[15px] font-semibold text-foreground mb-3">Alunos disponíveis para vincular</h2>
+            <div className="space-y-2 mb-6">
+              {availableStudents.map(profile => (
+                <div
+                  key={profile.id}
+                  className="bg-bg2 border border-border rounded-lg p-4 flex items-center gap-3"
+                >
+                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-[16px] font-semibold text-muted-foreground flex-shrink-0">
+                    {profile.full_name.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[14px] font-medium text-foreground">{profile.full_name}</div>
+                    <div className="text-[11px] text-muted-foreground mt-[2px] truncate">{profile.id}</div>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleLinkById(profile.id)}
+                    disabled={linking && linkingId === profile.id}
+                    className="flex-shrink-0"
+                  >
+                    {linking && linkingId === profile.id ? 'Vinculando...' : 'Vincular'}
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>

@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dumbbell } from 'lucide-react';
+import { Dumbbell, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 
 const schema = z.object({
@@ -26,6 +26,9 @@ type FormData = z.infer<typeof schema>;
 export default function SignupPage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+  const [submittedEmail, setSubmittedEmail] = useState('');
+
   const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: { role: 'student' },
@@ -51,12 +54,42 @@ export default function SignupPage() {
       setIsLoading(false);
       return;
     }
-    toast.success('Conta criada com sucesso!');
-    navigate(data.role === 'trainer' ? '/trainer' : '/student', { replace: true });
+    setSubmittedEmail(data.email);
+    setEmailSent(true);
+    setIsLoading(false);
+  }
+
+  if (emailSent) {
+    return (
+      <div className="min-h-screen overflow-y-auto flex items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-sm">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+              <Mail className="h-6 w-6 text-primary" />
+            </div>
+            <CardTitle className="text-xl">Verifique seu email</CardTitle>
+            <CardDescription>Workout Wisdom Guide</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground text-center">
+              Enviamos um link de confirmação para{' '}
+              <span className="font-medium text-foreground">{submittedEmail}</span>.
+              Clique no link para ativar sua conta e depois faça login.
+            </p>
+            <p className="text-xs text-muted-foreground text-center">
+              Verifique também a pasta de spam caso não encontre o email.
+            </p>
+            <Button className="w-full" onClick={() => navigate('/login')}>
+              Ir para o login
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="min-h-screen overflow-y-auto flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
           <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
@@ -86,14 +119,7 @@ export default function SignupPage() {
               <Label>Tipo de conta</Label>
               <div className="grid grid-cols-2 gap-2">
                 {(['student', 'trainer'] as const).map((r) => (
-                  <label
-                    key={r}
-                    className={`flex cursor-pointer items-center justify-center rounded-md border p-2.5 text-sm transition-colors ${
-                      role === r
-                        ? 'border-primary bg-primary/10 text-primary'
-                        : 'border-border text-muted-foreground'
-                    }`}
-                  >
+                  <label key={r} className={`flex cursor-pointer items-center justify-center rounded-md border p-2.5 text-sm transition-colors ${role === r ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground'}`}>
                     <input type="radio" value={r} {...register('role')} className="sr-only" />
                     {r === 'student' ? 'Aluno' : 'Treinador'}
                   </label>
@@ -113,9 +139,7 @@ export default function SignupPage() {
           </form>
           <p className="mt-4 text-center text-sm text-muted-foreground">
             Já tem conta?{' '}
-            <Link to="/login" className="text-primary underline-offset-4 hover:underline">
-              Entrar
-            </Link>
+            <Link to="/login" className="text-primary underline-offset-4 hover:underline">Entrar</Link>
           </p>
         </CardContent>
       </Card>
