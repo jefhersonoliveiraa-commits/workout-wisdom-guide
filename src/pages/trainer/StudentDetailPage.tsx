@@ -79,7 +79,7 @@ export default function StudentDetailPage() {
   ];
 
   return (
-    <div className="h-screen flex flex-col bg-background overflow-hidden">
+    <div className="h-full flex flex-col bg-background">
       <TrainerNav />
 
       <div className="flex-1 overflow-y-auto max-w-2xl mx-auto w-full">
