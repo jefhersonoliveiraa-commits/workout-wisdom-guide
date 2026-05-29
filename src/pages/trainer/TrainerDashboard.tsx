@@ -287,12 +287,20 @@ export default function TrainerDashboard() {
                     <div className="text-[11px] text-muted-foreground mt-[2px] truncate">{tpl.description}</div>
                   )}
                 </div>
-                <button
-                  onClick={() => { setAssignModal(tpl); setAssignStudentId(""); }}
-                  className="text-[11px] bg-primary/20 text-primary border border-primary/30 rounded-[6px] px-3 py-1.5 font-medium hover:bg-primary/30 transition-colors flex-shrink-0"
-                >
-                  Atribuir
-                </button>
+                <div className="flex gap-2 flex-shrink-0">
+                  <button
+                    onClick={() => navigate(`/trainer/plans/${tpl.id}`)}
+                    className="text-[11px] border border-border rounded-[6px] px-3 py-1.5 text-muted-foreground hover:text-primary hover:border-primary transition-colors"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    onClick={() => { setAssignModal(tpl); setAssignStudentId(""); }}
+                    className="text-[11px] bg-primary/20 text-primary border border-primary/30 rounded-[6px] px-3 py-1.5 font-medium hover:bg-primary/30 transition-colors"
+                  >
+                    Atribuir
+                  </button>
+                </div>
               </div>
             ))}
           </div>

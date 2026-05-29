@@ -43,6 +43,17 @@ async function fetchStudents(trainerId: string) {
   return data ?? [];
 }
 
+async function fetchPlan(planId: string) {
+  const { data: plan } = await supabase.from('workout_plans').select('*').eq('id', planId).single();
+  if (!plan) return null;
+  const { data: days } = await supabase.from('training_days').select('*').eq('plan_id', planId).order('sort_order');
+  const dayIds = (days ?? []).map((d: any) => d.id);
+  const { data: exercises } = dayIds.length
+    ? await supabase.from('exercises').select('*').in('day_id', dayIds).order('sort_order')
+    : { data: [] };
+  return { plan, days: days ?? [], exercises: exercises ?? [] };
+}
+
 export default function PlanBuilderPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -52,9 +63,51 @@ export default function PlanBuilderPage() {
   const [planName, setPlanName] = useState("");
   const [planDesc, setPlanDesc] = useState("");
   const [studentId, setStudentId] = useState("");
+  const [isTemplate, setIsTemplate] = useState(false);
   const [days, setDays] = useState<DayForm[]>(() => Array.from({ length: 7 }, defaultDay));
   const [saving, setSaving] = useState(false);
-  const [isTemplate, setIsTemplate] = useState(false);
+  const [loaded, setLoaded] = useState(!isEdit);
+
+  useEffect(() => {
+    if (!isEdit || !planId) return;
+    fetchPlan(planId).then(result => {
+      if (!result) return;
+      const { plan, days: dbDays, exercises } = result;
+      setPlanName(plan.name ?? "");
+      setPlanDesc(plan.description ?? "");
+      setStudentId(plan.student_id ?? "");
+      setIsTemplate(plan.is_template ?? false);
+      setDays(
+        Array.from({ length: 7 }, (_, i) => {
+          const d = (dbDays as any[]).find((day: any) => day.day_index === i);
+          if (!d) return defaultDay();
+          const exs = (exercises as any[]).filter((e: any) => e.day_id === d.id);
+          return {
+            title: d.title ?? "",
+            color_class: d.color_class ?? "primary",
+            tags: (d.tags ?? []).join(', '),
+            estimated_time: d.estimated_time ?? "60 min",
+            is_rest: d.is_rest ?? false,
+            warning_title: d.warning_title ?? "",
+            warning_text: d.warning_text ?? "",
+            exercises: exs.length > 0 ? exs.map((e: any) => ({
+              name: e.name ?? "",
+              muscle: e.muscle ?? "",
+              sets: e.sets ?? 3,
+              reps: e.reps ?? "8–12",
+              rest: e.rest ?? "2 min",
+              rir: e.rir ?? "",
+              suggested_load: e.suggested_load != null ? String(e.suggested_load) : "",
+              technique: e.technique ?? "",
+              description: e.description ?? "",
+              warnings: (e.warnings ?? []).join(', '),
+            })) : [emptyExercise()],
+          };
+        })
+      );
+      setLoaded(true);
+    });
+  }, [isEdit, planId]);
 
   const { data: students = [] } = useQuery({
     queryKey: ['trainer-students-list', user?.id],
@@ -70,39 +123,53 @@ export default function PlanBuilderPage() {
 
   const updateExercise = (dayIdx: number, exIdx: number, data: ExerciseFormData) =>
     setDays(prev => prev.map((d, i) => i === dayIdx ? {
-      ...d,
-      exercises: d.exercises.map((e, j) => j === exIdx ? data : e),
+      ...d, exercises: d.exercises.map((e, j) => j === exIdx ? data : e),
     } : d));
 
   const removeExercise = (dayIdx: number, exIdx: number) =>
     setDays(prev => prev.map((d, i) => i === dayIdx ? {
-      ...d,
-      exercises: d.exercises.filter((_, j) => j !== exIdx),
+      ...d, exercises: d.exercises.filter((_, j) => j !== exIdx),
     } : d));
 
   const handleSave = async () => {
     if (!planName.trim()) { toast.error('Dê um nome para a ficha'); return; }
     if (!isTemplate && !studentId) { toast.error('Selecione um aluno ou marque como modelo'); return; }
     if (!user?.id) return;
-
     setSaving(true);
 
     try {
-      const { data: plan, error: planError } = await supabase.from('workout_plans').insert({
-        trainer_id: user.id,
-        name: planName.trim(),
-        description: planDesc.trim() || null,
-        is_active: true,
-        is_template: isTemplate,
-        ...(isTemplate ? { student_id: null } : { student_id: studentId }),
-      }).select('id').single();
+      let targetPlanId = planId;
 
-      if (planError || !plan) throw planError ?? new Error('Falha ao criar ficha');
+      if (isEdit && planId) {
+        await supabase.from('workout_plans').update({
+          name: planName.trim(),
+          description: planDesc.trim() || null,
+          is_template: isTemplate,
+          ...(isTemplate ? { student_id: null } : { student_id: studentId || null }),
+        }).eq('id', planId);
+
+        const { data: oldDays } = await supabase.from('training_days').select('id').eq('plan_id', planId);
+        if (oldDays?.length) {
+          await supabase.from('exercises').delete().in('day_id', oldDays.map((d: any) => d.id));
+          await supabase.from('training_days').delete().eq('plan_id', planId);
+        }
+      } else {
+        const { data: plan, error } = await supabase.from('workout_plans').insert({
+          trainer_id: user.id,
+          name: planName.trim(),
+          description: planDesc.trim() || null,
+          is_active: true,
+          is_template: isTemplate,
+          ...(isTemplate ? { student_id: null } : { student_id: studentId }),
+        }).select('id').single();
+        if (error || !plan) throw error ?? new Error('Falha ao criar ficha');
+        targetPlanId = plan.id;
+      }
 
       for (let dayIdx = 0; dayIdx < days.length; dayIdx++) {
         const d = days[dayIdx];
         const { data: day, error: dayError } = await supabase.from('training_days').insert({
-          plan_id: plan.id,
+          plan_id: targetPlanId,
           day_index: dayIdx,
           day_label: DAY_LABELS[dayIdx],
           short_label: SHORT_LABELS[dayIdx],
@@ -115,35 +182,23 @@ export default function PlanBuilderPage() {
           warning_text: d.warning_text || null,
           sort_order: dayIdx,
         }).select('id').single();
-
         if (dayError || !day) throw dayError ?? new Error('Falha ao criar dia');
 
-        if (!d.is_rest && d.exercises.length > 0) {
-          const exercisesToInsert = d.exercises
-            .filter(e => e.name.trim())
-            .map((e, sortOrder) => ({
-              day_id: day.id,
-              name: e.name.trim(),
-              muscle: e.muscle || null,
-              sets: e.sets,
-              reps: e.reps,
-              rest: e.rest,
-              rir: e.rir || null,
-              technique: e.technique || null,
-              description: e.description || null,
-              warnings: e.warnings ? e.warnings.split(',').map(w => w.trim()).filter(Boolean) : [],
-              suggested_load: e.suggested_load ? parseFloat(e.suggested_load) : null,
-              sort_order: sortOrder,
-            }));
-
-          if (exercisesToInsert.length > 0) {
-            const { error: exError } = await supabase.from('exercises').insert(exercisesToInsert);
-            if (exError) throw exError;
-          }
+        if (!d.is_rest) {
+          const exs = d.exercises.filter(e => e.name.trim()).map((e, idx) => ({
+            day_id: day.id,
+            name: e.name.trim(), muscle: e.muscle || null,
+            sets: e.sets, reps: e.reps, rest: e.rest, rir: e.rir || null,
+            technique: e.technique || null, description: e.description || null,
+            warnings: e.warnings ? e.warnings.split(',').map(w => w.trim()).filter(Boolean) : [],
+            suggested_load: e.suggested_load ? parseFloat(e.suggested_load) : null,
+            sort_order: idx,
+          }));
+          if (exs.length) await supabase.from('exercises').insert(exs);
         }
       }
 
-      toast.success('Ficha criada com sucesso!');
+      toast.success(isEdit ? 'Ficha atualizada!' : 'Ficha criada!');
       navigate('/trainer');
     } catch (err: any) {
       toast.error('Erro ao salvar: ' + (err?.message ?? 'Tente novamente'));
@@ -151,6 +206,17 @@ export default function PlanBuilderPage() {
       setSaving(false);
     }
   };
+
+  if (!loaded) {
+    return (
+      <div className="h-screen flex flex-col bg-background">
+        <TrainerNav />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="w-7 h-7 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen flex flex-col bg-background">
@@ -170,7 +236,7 @@ export default function PlanBuilderPage() {
             <Label>Descrição (opcional)</Label>
             <Input value={planDesc} onChange={e => setPlanDesc(e.target.value)} placeholder="Objetivo, observações gerais..." />
           </div>
-          {/* Toggle modelo */}
+
           <div className="flex items-center justify-between bg-bg2 border border-border rounded-lg p-3">
             <div>
               <div className="text-[13px] font-medium text-foreground">Salvar como modelo</div>
@@ -179,26 +245,26 @@ export default function PlanBuilderPage() {
             <button
               type="button"
               onClick={() => setIsTemplate(v => !v)}
-              className={`w-11 h-6 rounded-full transition-colors relative ${isTemplate ? 'bg-primary' : 'bg-bg4 border border-border'}`}
+              className={`w-11 h-6 rounded-full transition-colors relative flex-shrink-0 ${isTemplate ? 'bg-primary' : 'bg-bg4 border border-border'}`}
             >
               <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${isTemplate ? 'translate-x-5' : 'translate-x-0.5'}`} />
             </button>
           </div>
 
           {!isTemplate && (
-          <div className="space-y-1.5">
-            <Label>Aluno *</Label>
-            <select
-              value={studentId}
-              onChange={e => setStudentId(e.target.value)}
-              className="w-full bg-bg2 border border-border rounded-md p-2 text-[13px] text-foreground outline-none focus:border-primary transition-colors"
-            >
-              <option value="">Selecione um aluno</option>
-              {students.map(s => (
-                <option key={s.id} value={s.id}>{s.full_name}</option>
-              ))}
-            </select>
-          </div>
+            <div className="space-y-1.5">
+              <Label>Aluno *</Label>
+              <select
+                value={studentId}
+                onChange={e => setStudentId(e.target.value)}
+                className="w-full bg-bg2 border border-border rounded-md p-2 text-[13px] text-foreground outline-none focus:border-primary transition-colors"
+              >
+                <option value="">Selecione um aluno</option>
+                {students.map(s => (
+                  <option key={s.id} value={s.id}>{s.full_name}</option>
+                ))}
+              </select>
+            </div>
           )}
         </div>
 
@@ -214,12 +280,8 @@ export default function PlanBuilderPage() {
                   {DAY_LABELS[dayIdx]} ({SHORT_LABELS[dayIdx]})
                 </span>
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={day.is_rest}
-                    onChange={e => updateDay(dayIdx, { is_rest: e.target.checked })}
-                    className="rounded"
-                  />
+                  <input type="checkbox" checked={day.is_rest}
+                    onChange={e => updateDay(dayIdx, { is_rest: e.target.checked })} className="rounded" />
                   <span className="text-[11px] text-muted-foreground">Descanso</span>
                 </label>
               </div>
@@ -236,11 +298,8 @@ export default function PlanBuilderPage() {
                   </div>
                   <div className="space-y-1">
                     <Label className="text-[11px]">Cor</Label>
-                    <select
-                      value={day.color_class}
-                      onChange={e => updateDay(dayIdx, { color_class: e.target.value })}
-                      className="w-full bg-bg3 border border-border rounded-md p-2 text-[13px] text-foreground outline-none"
-                    >
+                    <select value={day.color_class} onChange={e => updateDay(dayIdx, { color_class: e.target.value })}
+                      className="w-full bg-bg3 border border-border rounded-md p-2 text-[13px] text-foreground outline-none">
                       {COLOR_CLASSES.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                   </div>
@@ -266,21 +325,13 @@ export default function PlanBuilderPage() {
                   Exercícios ({day.exercises.length})
                 </div>
                 {day.exercises.map((ex, exIdx) => (
-                  <ExerciseFormRow
-                    key={exIdx}
-                    index={exIdx}
-                    value={ex}
+                  <ExerciseFormRow key={exIdx} index={exIdx} value={ex}
                     onChange={(_, data) => updateExercise(dayIdx, exIdx, data)}
-                    onRemove={() => removeExercise(dayIdx, exIdx)}
-                  />
+                    onRemove={() => removeExercise(dayIdx, exIdx)} />
                 ))}
-                <button
-                  type="button"
-                  onClick={() => addExercise(dayIdx)}
-                  className="w-full border border-dashed border-border rounded-lg p-3 text-[12px] text-muted-foreground hover:text-primary hover:border-primary transition-colors flex items-center justify-center gap-2"
-                >
-                  <Plus size={14} />
-                  Adicionar exercício
+                <button type="button" onClick={() => addExercise(dayIdx)}
+                  className="w-full border border-dashed border-border rounded-lg p-3 text-[12px] text-muted-foreground hover:text-primary hover:border-primary transition-colors flex items-center justify-center gap-2">
+                  <Plus size={14} /> Adicionar exercício
                 </button>
               </div>
             )}
@@ -292,7 +343,7 @@ export default function PlanBuilderPage() {
         <div className="max-w-2xl mx-auto">
           <Button onClick={handleSave} disabled={saving} className="w-full gap-2">
             <Save size={16} />
-            {saving ? 'Salvando...' : 'Salvar Ficha'}
+            {saving ? 'Salvando...' : isEdit ? 'Salvar alterações' : 'Criar ficha'}
           </Button>
         </div>
       </div>
