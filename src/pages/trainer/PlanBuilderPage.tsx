@@ -54,6 +54,7 @@ export default function PlanBuilderPage() {
   const [studentId, setStudentId] = useState("");
   const [days, setDays] = useState<DayForm[]>(() => Array.from({ length: 7 }, defaultDay));
   const [saving, setSaving] = useState(false);
+  const [isTemplate, setIsTemplate] = useState(false);
 
   const { data: students = [] } = useQuery({
     queryKey: ['trainer-students-list', user?.id],
@@ -81,7 +82,7 @@ export default function PlanBuilderPage() {
 
   const handleSave = async () => {
     if (!planName.trim()) { toast.error('Dê um nome para a ficha'); return; }
-    if (!studentId) { toast.error('Selecione um aluno'); return; }
+    if (!isTemplate && !studentId) { toast.error('Selecione um aluno ou marque como modelo'); return; }
     if (!user?.id) return;
 
     setSaving(true);
@@ -89,10 +90,11 @@ export default function PlanBuilderPage() {
     try {
       const { data: plan, error: planError } = await supabase.from('workout_plans').insert({
         trainer_id: user.id,
-        student_id: studentId,
         name: planName.trim(),
         description: planDesc.trim() || null,
         is_active: true,
+        is_template: isTemplate,
+        ...(isTemplate ? { student_id: null } : { student_id: studentId }),
       }).select('id').single();
 
       if (planError || !plan) throw planError ?? new Error('Falha ao criar ficha');
@@ -168,6 +170,22 @@ export default function PlanBuilderPage() {
             <Label>Descrição (opcional)</Label>
             <Input value={planDesc} onChange={e => setPlanDesc(e.target.value)} placeholder="Objetivo, observações gerais..." />
           </div>
+          {/* Toggle modelo */}
+          <div className="flex items-center justify-between bg-bg2 border border-border rounded-lg p-3">
+            <div>
+              <div className="text-[13px] font-medium text-foreground">Salvar como modelo</div>
+              <div className="text-[11px] text-muted-foreground">Modelo pode ser atribuído a vários alunos depois</div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsTemplate(v => !v)}
+              className={`w-11 h-6 rounded-full transition-colors relative ${isTemplate ? 'bg-primary' : 'bg-bg4 border border-border'}`}
+            >
+              <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${isTemplate ? 'translate-x-5' : 'translate-x-0.5'}`} />
+            </button>
+          </div>
+
+          {!isTemplate && (
           <div className="space-y-1.5">
             <Label>Aluno *</Label>
             <select
@@ -181,6 +199,7 @@ export default function PlanBuilderPage() {
               ))}
             </select>
           </div>
+          )}
         </div>
 
         <div className="text-[10px] font-semibold tracking-[0.12em] uppercase text-muted-foreground mb-4">
