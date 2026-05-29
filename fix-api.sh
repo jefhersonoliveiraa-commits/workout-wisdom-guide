@@ -1,3 +1,10 @@
+#!/usr/bin/env bash
+set -e
+
+echo "Aplicando a integração com ExerciseDB e traduções..."
+
+# Reescreve o arquivo exerciseApi.ts com a nova lógica
+cat << 'EOF' > src/lib/exerciseApi.ts
 export interface ExerciseSuggestion {
   id: string;
   name: string;
@@ -88,3 +95,12 @@ export function youtubeSearchUrl(name: string): string {
     `como fazer ${name} execução correta`
   )}`;
 }
+EOF
+
+# Verifica se a chave já existe no .env, se não existir, ele adiciona
+if ! grep -q "VITE_RAPIDAPI_KEY" .env 2>/dev/null; then
+    echo -e "\nVITE_RAPIDAPI_KEY=sua_chave_aqui" >> .env
+    echo "🔑 Variável VITE_RAPIDAPI_KEY adicionada ao seu arquivo .env!"
+fi
+
+echo "✅ Arquivo exerciseApi.ts atualizado com sucesso!"
