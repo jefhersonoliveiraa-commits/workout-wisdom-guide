@@ -1,80 +1,35 @@
-export interface BodyWeightEntry {
-  date: string; // YYYY-MM-DD
-  weight: number; // kg
-  bmi: number;
+import { supabase } from './supabase';
+export interface BodyWeightEntry { date: string; weight: number; bmi: number; }
+const DISMISSED_KEY = 'workout-body-weight-dismissed';
+const CHECK_INTERVAL_DAYS = 14;
+
+export async function loadBodyWeightHistory(studentId: string): Promise<BodyWeightEntry[]> {
+  const { data } = await supabase.from('body_weight_logs').select('log_date, weight_kg, bmi').eq('student_id', studentId).order('log_date', { ascending: true });
+  if (!data) return [];
+  return data.map(r => ({ date: r.log_date, weight: Number(r.weight_kg), bmi: Number(r.bmi ?? 0) }));
 }
-
-const BODY_WEIGHT_KEY = "workout-body-weight";
-const LAST_PROMPT_KEY = "workout-body-weight-last-prompt";
-const CHECK_INTERVAL_DAYS = 14; // a cada 2 semanas
-const HEIGHT_M = 1.68; // altura do Jefherson
-
-export function loadBodyWeightHistory(): BodyWeightEntry[] {
-  try {
-    const saved = localStorage.getItem(BODY_WEIGHT_KEY);
-    return saved ? JSON.parse(saved) : [];
-  } catch {
-    return [];
-  }
+export async function saveBodyWeight(weight: number, studentId: string, heightM: number | null): Promise<BodyWeightEntry> {
+  const today = new Date().toISOString().split('T')[0]; const h = heightM ?? 1.7; const bmi = parseFloat((weight / (h * h)).toFixed(1));
+  await supabase.from('body_weight_logs').upsert({ student_id: studentId, log_date: today, weight_kg: weight, bmi }, { onConflict: 'student_id,log_date' });
+  return { date: today, weight, bmi };
 }
-
-export function saveBodyWeight(weight: number): BodyWeightEntry {
-  const history = loadBodyWeightHistory();
-  const today = new Date().toISOString().split("T")[0];
-  const bmi = parseFloat((weight / (HEIGHT_M * HEIGHT_M)).toFixed(1));
-  const entry: BodyWeightEntry = { date: today, weight, bmi };
-
-  const existingIdx = history.findIndex(e => e.date === today);
-  if (existingIdx >= 0) {
-    history[existingIdx] = entry;
-  } else {
-    history.push(entry);
-  }
-
-  localStorage.setItem(BODY_WEIGHT_KEY, JSON.stringify(history));
-  localStorage.setItem(LAST_PROMPT_KEY, today);
-  return entry;
+export async function getLatestBodyWeight(studentId: string): Promise<BodyWeightEntry | null> {
+  const { data } = await supabase.from('body_weight_logs').select('log_date, weight_kg, bmi').eq('student_id', studentId).order('log_date', { ascending: false }).limit(1).maybeSingle();
+  if (!data) return null;
+  return { date: data.log_date, weight: Number(data.weight_kg), bmi: Number(data.bmi ?? 0) };
 }
-
-export function getLatestBodyWeight(): BodyWeightEntry | null {
-  const history = loadBodyWeightHistory();
-  return history.length > 0 ? history[history.length - 1] : null;
+export async function getWeightChange(studentId: string): Promise<{ change: number; period: string } | null> {
+  const { data } = await supabase.from('body_weight_logs').select('log_date, weight_kg').eq('student_id', studentId).order('log_date', { ascending: false }).limit(2);
+  if (!data || data.length < 2) return null;
+  const change = parseFloat((Number(data[0].weight_kg) - Number(data[1].weight_kg)).toFixed(1));
+  return { change, period: `desde ${new Date(data[1].log_date + 'T12:00:00').toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })}` };
 }
-
-export function shouldPromptWeighIn(): boolean {
-  const lastPrompt = localStorage.getItem(LAST_PROMPT_KEY);
-  if (!lastPrompt) return true; // never prompted
-
-  const last = new Date(lastPrompt + "T12:00:00");
-  const now = new Date();
-  const diffDays = Math.floor((now.getTime() - last.getTime()) / (1000 * 60 * 60 * 24));
+export async function shouldPromptWeighIn(studentId: string): Promise<boolean> {
+  if (wasDismissedToday()) return false;
+  const { data } = await supabase.from('body_weight_logs').select('log_date').eq('student_id', studentId).order('log_date', { ascending: false }).limit(1).maybeSingle();
+  if (!data) return true;
+  const diffDays = Math.floor((Date.now() - new Date(data.log_date + 'T12:00:00').getTime()) / (1000 * 60 * 60 * 24));
   return diffDays >= CHECK_INTERVAL_DAYS;
 }
-
-export function dismissWeighInPrompt() {
-  // Adiar por 1 dia (não marcar como feito, apenas ignorar por hoje)
-  const today = new Date().toISOString().split("T")[0];
-  localStorage.setItem(LAST_PROMPT_KEY + "-dismissed", today);
-}
-
-export function wasDismissedToday(): boolean {
-  const dismissed = localStorage.getItem(LAST_PROMPT_KEY + "-dismissed");
-  if (!dismissed) return false;
-  return dismissed === new Date().toISOString().split("T")[0];
-}
-
-export function getWeightChange(): { change: number; period: string } | null {
-  const history = loadBodyWeightHistory();
-  if (history.length < 2) return null;
-  const latest = history[history.length - 1];
-  const previous = history[history.length - 2];
-  const change = parseFloat((latest.weight - previous.weight).toFixed(1));
-  return { change, period: `desde ${formatDateShort(previous.date)}` };
-}
-
-function formatDateShort(dateStr: string): string {
-  return new Date(dateStr + "T12:00:00").toLocaleDateString("pt-BR", {
-    day: "numeric",
-    month: "short",
-  });
-}
+export function dismissWeighInPrompt() { sessionStorage.setItem(DISMISSED_KEY, new Date().toISOString().split('T')[0]); }
+export function wasDismissedToday(): boolean { return sessionStorage.getItem(DISMISSED_KEY) === new Date().toISOString().split('T')[0]; }
