@@ -9,7 +9,7 @@ const navItems = [
   { id: "treino", icon: Dumbbell, label: "Treino" },
   { id: "historico", icon: CalendarDays, label: "Histórico" },
   { id: "evolucao", icon: BarChart2, label: "Evolução" },
-  { id: "prog", icon: TrendingUp, label: "Progressão" },
+  { id: "prog", icon: TrendingUp, label: "Técnicas" },
   { id: "perfil", icon: User, label: "Perfil" },
 ];
 
