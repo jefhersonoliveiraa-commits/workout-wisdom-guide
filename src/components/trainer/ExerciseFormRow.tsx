@@ -1,6 +1,8 @@
-import { Trash2 } from "lucide-react";
+import { useState } from "react";
+import { Trash2, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ExerciseSearchModal } from "@/components/trainer/ExerciseSearchModal";
 
 export interface ExerciseFormData {
   name: string;
@@ -23,8 +25,13 @@ interface ExerciseFormRowProps {
 }
 
 export function ExerciseFormRow({ index, value, onChange, onRemove }: ExerciseFormRowProps) {
+  const [searchOpen, setSearchOpen] = useState(false);
+
   const update = (field: keyof ExerciseFormData, v: string | number) =>
     onChange(index, { ...value, [field]: v });
+
+  const handlePick = (name: string, muscle: string) =>
+    onChange(index, { ...value, name, muscle: muscle || value.muscle });
 
   return (
     <div className="bg-bg3 border border-border rounded-lg p-4 mb-3">
@@ -44,7 +51,18 @@ export function ExerciseFormRow({ index, value, onChange, onRemove }: ExerciseFo
       <div className="grid grid-cols-2 gap-3">
         <div className="col-span-2 space-y-1">
           <Label className="text-[11px]">Nome do exercício *</Label>
-          <Input value={value.name} onChange={e => update('name', e.target.value)} placeholder="Ex: Supino Reto com Barra" className="text-[13px]" />
+          <div className="flex gap-2">
+            <Input value={value.name} onChange={e => update('name', e.target.value)} placeholder="Ex: Supino Reto com Barra" className="text-[13px] flex-1" />
+            <button
+              type="button"
+              onClick={() => setSearchOpen(true)}
+              title="Buscar no banco de exercícios"
+              className="px-3 rounded-md border border-border bg-bg2 text-muted-foreground hover:text-primary hover:border-primary transition-colors flex items-center gap-1.5 text-[12px] flex-shrink-0"
+            >
+              <Search size={14} />
+              Buscar
+            </button>
+          </div>
         </div>
         <div className="space-y-1">
           <Label className="text-[11px]">Músculo</Label>
@@ -89,6 +107,12 @@ export function ExerciseFormRow({ index, value, onChange, onRemove }: ExerciseFo
           <Input value={value.warnings} onChange={e => update('warnings', e.target.value)} placeholder="Ex: Ombro, Lombar" className="text-[13px]" />
         </div>
       </div>
+
+      <ExerciseSearchModal
+        open={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        onSelect={handlePick}
+      />
     </div>
   );
 }

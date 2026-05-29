@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { getTodaySession, getLastSession, saveSet, saveObservation, type SetLog } from "@/lib/storage";
+import { youtubeSearchUrl } from "@/lib/exerciseApi";
 
 export interface WorkoutExercise {
   id: string;
@@ -233,6 +234,16 @@ export function ExerciseCard({
                   <div className="text-[12px] text-primary/90 leading-[1.6]">{exercise.technique}</div>
                 </div>
               )}
+
+              <a
+                href={youtubeSearchUrl(exercise.name)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-3 flex items-center justify-center gap-2 w-full rounded-[6px] border border-border bg-bg4 px-3 py-2 text-[12px] font-medium text-muted-foreground hover:text-primary hover:border-primary transition-colors"
+              >
+                <span className="text-[14px]">▶</span>
+                Ver vídeo demonstrativo
+              </a>
 
               <div className="grid grid-cols-[44px_1fr_1fr_44px] gap-2 mt-4 px-1">
                 <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Sér.</div>
