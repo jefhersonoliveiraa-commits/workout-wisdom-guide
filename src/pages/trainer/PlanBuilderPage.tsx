@@ -52,8 +52,61 @@ export default function PlanBuilderPage() {
   const [planName, setPlanName] = useState("");
   const [planDesc, setPlanDesc] = useState("");
   const [studentId, setStudentId] = useState("");
+  const [isTemplate, setIsTemplate] = useState(false);
   const [days, setDays] = useState<DayForm[]>(() => Array.from({ length: 7 }, defaultDay));
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(isEdit);
+
+  // Carrega dados do plano existente no modo edição
+  useEffect(() => {
+    if (!planId) return;
+    setLoading(true);
+    (async () => {
+      const { data: plan } = await supabase.from('workout_plans').select('*').eq('id', planId).single();
+      if (!plan) { setLoading(false); return; }
+
+      setPlanName(plan.name ?? "");
+      setPlanDesc(plan.description ?? "");
+      setStudentId(plan.student_id ?? "");
+      setIsTemplate(plan.is_template ?? false);
+
+      const { data: dbDays } = await supabase.from('training_days').select('*').eq('plan_id', planId).order('sort_order');
+      if (!dbDays) { setLoading(false); return; }
+
+      const dayIds = dbDays.map(d => d.id);
+      const { data: dbExercises } = await supabase.from('exercises').select('*').in('day_id', dayIds).order('sort_order');
+
+      const loadedDays: DayForm[] = Array.from({ length: 7 }, (_, i) => {
+        const d = dbDays.find(day => day.sort_order === i);
+        if (!d) return defaultDay();
+        const exs = (dbExercises ?? []).filter(e => e.day_id === d.id).map(e => ({
+          name: e.name ?? '',
+          muscle: e.muscle ?? '',
+          sets: e.sets ?? 3,
+          reps: e.reps ?? '8-12',
+          rest: e.rest ?? '2 min',
+          rir: e.rir ?? '',
+          suggested_load: e.suggested_load ? String(e.suggested_load) : '',
+          technique: e.technique ?? '',
+          description: e.description ?? '',
+          warnings: Array.isArray(e.warnings) ? e.warnings.join(', ') : (e.warnings ?? ''),
+        }));
+        return {
+          title: d.title ?? '',
+          color_class: d.color_class ?? 'primary',
+          tags: Array.isArray(d.tags) ? d.tags.join(', ') : (d.tags ?? ''),
+          estimated_time: d.estimated_time ?? '60 min',
+          is_rest: d.is_rest ?? false,
+          warning_title: d.warning_title ?? '',
+          warning_text: d.warning_text ?? '',
+          exercises: exs.length > 0 ? exs : [emptyExercise()],
+        };
+      });
+
+      setDays(loadedDays);
+      setLoading(false);
+    })();
+  }, [planId]);
 
   const { data: students = [] } = useQuery({
     queryKey: ['trainer-students-list', user?.id],
@@ -81,19 +134,45 @@ export default function PlanBuilderPage() {
 
   const handleSave = async () => {
     if (!planName.trim()) { toast.error('Dê um nome para a ficha'); return; }
-    if (!studentId) { toast.error('Selecione um aluno'); return; }
+    if (!isTemplate && !studentId) { toast.error('Selecione um aluno ou marque como modelo'); return; }
     if (!user?.id) return;
 
     setSaving(true);
 
     try {
-      const { data: plan, error: planError } = await supabase.from('workout_plans').insert({
-        trainer_id: user.id,
-        student_id: studentId,
-        name: planName.trim(),
-        description: planDesc.trim() || null,
-        is_active: true,
-      }).select('id').single();
+      let resolvedPlanId: string;
+
+      if (isEdit && planId) {
+        // Modo edição: atualiza o plano
+        const { error: planError } = await supabase.from('workout_plans').update({
+          name: planName.trim(),
+          description: planDesc.trim() || null,
+          student_id: isTemplate ? null : studentId,
+          is_template: isTemplate,
+        }).eq('id', planId);
+        if (planError) throw planError;
+        resolvedPlanId = planId;
+        // Remove dias/exercícios antigos para recriar
+        const { data: oldDays } = await supabase.from('training_days').select('id').eq('plan_id', planId);
+        if (oldDays?.length) {
+          await supabase.from('exercises').delete().in('day_id', oldDays.map(d => d.id));
+          await supabase.from('training_days').delete().eq('plan_id', planId);
+        }
+      } else {
+        // Modo criação
+        const { data: plan, error: planError } = await supabase.from('workout_plans').insert({
+          trainer_id: user.id,
+          student_id: isTemplate ? null : studentId,
+          name: planName.trim(),
+          description: planDesc.trim() || null,
+          is_active: true,
+          is_template: isTemplate,
+        }).select('id').single();
+        if (planError || !plan) throw planError ?? new Error('Falha ao criar ficha');
+        resolvedPlanId = plan.id;
+      }
+
+      const plan = { id: resolvedPlanId } as { id: string };
 
       if (planError || !plan) throw planError ?? new Error('Falha ao criar ficha');
 
@@ -141,7 +220,7 @@ export default function PlanBuilderPage() {
         }
       }
 
-      toast.success('Ficha criada com sucesso!');
+      toast.success(isEdit ? 'Ficha atualizada!' : 'Ficha criada com sucesso!');
       navigate('/trainer');
     } catch (err: any) {
       toast.error('Erro ao salvar: ' + (err?.message ?? 'Tente novamente'));
@@ -149,6 +228,17 @@ export default function PlanBuilderPage() {
       setSaving(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="h-full flex flex-col bg-background">
+        <TrainerNav />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-muted-foreground text-sm animate-pulse">Carregando ficha...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full flex flex-col bg-background">
@@ -168,19 +258,34 @@ export default function PlanBuilderPage() {
             <Label>Descrição (opcional)</Label>
             <Input value={planDesc} onChange={e => setPlanDesc(e.target.value)} placeholder="Objetivo, observações gerais..." />
           </div>
-          <div className="space-y-1.5">
-            <Label>Aluno *</Label>
-            <select
-              value={studentId}
-              onChange={e => setStudentId(e.target.value)}
-              className="w-full bg-bg2 border border-border rounded-md p-2 text-[13px] text-foreground outline-none focus:border-primary transition-colors"
-            >
-              <option value="">Selecione um aluno</option>
-              {students.map(s => (
-                <option key={s.id} value={s.id}>{s.full_name}</option>
-              ))}
-            </select>
-          </div>
+
+          {/* Toggle modelo */}
+          <label className="flex items-center gap-3 cursor-pointer bg-bg2 border border-border rounded-xl p-3">
+            <div className={`w-10 h-6 rounded-full transition-colors flex-shrink-0 ${isTemplate ? 'bg-primary' : 'bg-bg4'}`}
+              onClick={() => setIsTemplate(v => !v)}>
+              <div className={`w-5 h-5 rounded-full bg-white shadow mt-0.5 transition-transform ${isTemplate ? 'translate-x-4.5 ml-0.5' : 'ml-0.5'}`} />
+            </div>
+            <div>
+              <div className="text-[13px] font-medium text-foreground">Salvar como modelo</div>
+              <div className="text-[11px] text-muted-foreground">Modelo pode ser atribuído a vários alunos depois</div>
+            </div>
+          </label>
+
+          {!isTemplate && (
+            <div className="space-y-1.5">
+              <Label>Aluno *</Label>
+              <select
+                value={studentId}
+                onChange={e => setStudentId(e.target.value)}
+                className="w-full bg-bg2 border border-border rounded-md p-2 text-[13px] text-foreground outline-none focus:border-primary transition-colors"
+              >
+                <option value="">Selecione um aluno</option>
+                {students.map(s => (
+                  <option key={s.id} value={s.id}>{s.full_name}</option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
 
         <div className="text-[10px] font-semibold tracking-[0.12em] uppercase text-muted-foreground mb-4">
