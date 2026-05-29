@@ -260,16 +260,19 @@ export default function PlanBuilderPage() {
           </div>
 
           {/* Toggle modelo */}
-          <label className="flex items-center gap-3 cursor-pointer bg-bg2 border border-border rounded-xl p-3">
-            <div className={`w-10 h-6 rounded-full transition-colors flex-shrink-0 ${isTemplate ? 'bg-primary' : 'bg-bg4'}`}
-              onClick={() => setIsTemplate(v => !v)}>
-              <div className={`w-5 h-5 rounded-full bg-white shadow mt-0.5 transition-transform ${isTemplate ? 'translate-x-4.5 ml-0.5' : 'ml-0.5'}`} />
+          <button
+            type="button"
+            onClick={() => setIsTemplate(v => !v)}
+            className="flex items-center gap-3 w-full text-left bg-bg2 border border-border rounded-xl p-3 hover:border-primary/40 transition-colors"
+          >
+            <div className={`relative w-11 h-6 rounded-full flex-shrink-0 transition-colors duration-200 ${isTemplate ? 'bg-primary' : 'bg-bg4'}`}>
+              <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${isTemplate ? 'translate-x-5' : 'translate-x-0'}`} />
             </div>
             <div>
               <div className="text-[13px] font-medium text-foreground">Salvar como modelo</div>
               <div className="text-[11px] text-muted-foreground">Modelo pode ser atribuído a vários alunos depois</div>
             </div>
-          </label>
+          </button>
 
           {!isTemplate && (
             <div className="space-y-1.5">
