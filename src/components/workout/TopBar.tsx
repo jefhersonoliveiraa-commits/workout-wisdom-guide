@@ -21,27 +21,33 @@ export function TopBar({ viewingStudent, onBack }: TopBarProps) {
     <div className="flex-shrink-0 border-b border-border px-[18px] pt-[14px] pb-[10px] flex items-center justify-between bg-background">
       <div className="flex items-center gap-[10px]">
         {onBack && (
-          <button onClick={onBack} className="text-muted-foreground mr-1 text-sm">←</button>
+          <button onClick={onBack} className="text-muted-foreground hover:text-foreground transition-colors mr-1 text-sm">
+            ←
+          </button>
         )}
-        <div className="w-[10px] h-[10px] rounded-full bg-primary flex-shrink-0" />
+        {/* Animated pulse dot */}
+        <div className="relative flex-shrink-0 w-[10px] h-[10px]">
+          <span className="absolute inset-0 rounded-full bg-primary animate-ping opacity-60" />
+          <span className="relative block w-[10px] h-[10px] rounded-full bg-primary" />
+        </div>
         <div>
-          <div className="text-[15px] font-semibold text-foreground">Ficha de Treino</div>
-          <div className="text-[11px] text-muted-foreground mt-[1px]">
+          <div className="text-[15px] font-bold text-foreground">Ficha de Treino</div>
+          <div className="text-[10px] text-muted-foreground mt-[1px]">
             {viewingStudent
               ? `Visualizando: ${viewingStudent}`
               : profile
-              ? `${profile.full_name}`
+              ? profile.full_name
               : "Carregando..."}
           </div>
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <div className="bg-bg3 border border-border-bright rounded-[20px] px-3 py-1 text-[11px] text-muted-foreground font-mono">
+        <div className="bg-bg3 border border-border-bright rounded-full px-3 py-1 text-[11px] text-foreground font-mono font-medium">
           {todayLabel}
         </div>
         <button
           onClick={signOut}
-          className="p-2 rounded-full text-muted-foreground hover:text-foreground transition-colors"
+          className="p-[7px] rounded-full text-muted-foreground hover:text-foreground hover:bg-bg3 transition-all duration-150 border border-transparent hover:border-border"
           title="Sair"
         >
           <LogOut size={14} />

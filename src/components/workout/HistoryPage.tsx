@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { loadHistory, getWeekHistory } from "@/lib/storage";
+import { Flame, Dumbbell, CalendarCheck } from "lucide-react";
 
 const DAY_LABELS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 
@@ -39,14 +40,20 @@ export function HistoryPage({ studentId }: HistoryPageProps) {
           return (
             <div
               key={dayIndex}
-              className={`bg-bg2 border rounded-sm p-2 text-center ${
-                completed ? "border-primary bg-primary/10" : partial ? "border-workout-yellow/40" : "border-border"
+              className={`bg-bg2 border rounded-xl p-2 text-center transition-colors ${
+                completed
+                  ? "border-primary bg-primary/10"
+                  : partial
+                  ? "border-workout-yellow/40"
+                  : "border-border"
               }`}
             >
-              <div className="text-[9px] text-muted-foreground uppercase">{label}</div>
-              <div className={`text-[16px] mt-1 ${
-                completed ? "text-primary" : partial ? "text-workout-yellow" : "text-muted-foreground/30"
-              }`}>
+              <div className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wide">{label}</div>
+              <div
+                className={`text-[18px] mt-1 leading-none ${
+                  completed ? "text-primary" : partial ? "text-workout-yellow" : "text-muted-foreground/30"
+                }`}
+              >
                 {completed ? "✓" : partial ? "◐" : "○"}
               </div>
               <div className="text-[8px] text-muted-foreground mt-1">
@@ -62,19 +69,28 @@ export function HistoryPage({ studentId }: HistoryPageProps) {
       </div>
 
       <div className="grid grid-cols-3 gap-2 mb-4">
-        <div className="bg-bg2 border border-border rounded-lg p-3 text-center">
+        <div className="bg-bg2 border border-border rounded-xl p-3 text-center">
+          <div className="flex justify-center mb-1">
+            <Flame size={14} className="text-primary/70" />
+          </div>
           <div className="text-[20px] font-semibold font-mono text-primary">
             {weekSessions.filter(s => s.exercisesCompleted > 0).length}
           </div>
           <div className="text-[10px] text-muted-foreground mt-1">treinos semana</div>
         </div>
-        <div className="bg-bg2 border border-border rounded-lg p-3 text-center">
+        <div className="bg-bg2 border border-border rounded-xl p-3 text-center">
+          <div className="flex justify-center mb-1">
+            <Dumbbell size={14} className="text-primary/70" />
+          </div>
           <div className="text-[20px] font-semibold font-mono text-primary">
             {weekSessions.reduce((a, s) => a + s.exercisesCompleted, 0)}
           </div>
           <div className="text-[10px] text-muted-foreground mt-1">exercícios</div>
         </div>
-        <div className="bg-bg2 border border-border rounded-lg p-3 text-center">
+        <div className="bg-bg2 border border-border rounded-xl p-3 text-center">
+          <div className="flex justify-center mb-1">
+            <CalendarCheck size={14} className="text-primary/70" />
+          </div>
           <div className="text-[20px] font-semibold font-mono text-primary">
             {allSessions.length}
           </div>
@@ -87,30 +103,47 @@ export function HistoryPage({ studentId }: HistoryPageProps) {
       </div>
 
       {sortedSessions.length === 0 && (
-        <div className="bg-bg2 border border-border rounded-lg p-6 text-center">
+        <div className="bg-bg2 border border-border rounded-xl p-6 text-center">
           <div className="text-[28px] mb-2">📋</div>
-          <p className="text-[13px] text-muted-foreground">Nenhum treino registrado ainda. Complete exercícios para ver seu histórico aqui!</p>
+          <p className="text-[13px] text-muted-foreground">
+            Nenhum treino registrado ainda. Complete exercícios para ver seu histórico aqui!
+          </p>
         </div>
       )}
 
       {sortedSessions.slice(0, 20).map((session, i) => {
-        const pct = session.totalExercises > 0
-          ? Math.round((session.exercisesCompleted / session.totalExercises) * 100)
-          : 0;
+        const pct =
+          session.totalExercises > 0
+            ? Math.round((session.exercisesCompleted / session.totalExercises) * 100)
+            : 0;
         const dateStr = new Date(session.date + "T12:00:00").toLocaleDateString("pt-BR", {
-          weekday: "short", day: "numeric", month: "short",
+          weekday: "short",
+          day: "numeric",
+          month: "short",
         });
+        const full = pct === 100;
 
         return (
-          <div key={i} className="bg-bg2 border border-border rounded-lg p-3 mb-2 flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-[12px] font-mono font-semibold ${
-              pct === 100 ? "bg-primary/20 text-primary" : "bg-bg4 text-muted-foreground"
-            }`}>
+          <div
+            key={i}
+            className={`bg-bg2 border border-border rounded-xl p-3 mb-2 flex items-center gap-3 border-l-4 ${
+              full ? "border-l-primary" : "border-l-muted-foreground/20"
+            }`}
+          >
+            <div
+              className={`w-10 h-10 rounded-full flex items-center justify-center text-[11px] font-mono font-semibold flex-shrink-0 border-2 ${
+                full
+                  ? "border-primary text-primary bg-primary/10"
+                  : "border-muted-foreground/30 text-muted-foreground bg-transparent"
+              }`}
+            >
               {pct}%
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-[13px] font-medium text-foreground">{session.dayTitle}</div>
-              <div className="text-[11px] text-muted-foreground">{dateStr} · {session.exercisesCompleted}/{session.totalExercises} exercícios</div>
+              <div className="text-[11px] text-muted-foreground">
+                {dateStr} · {session.exercisesCompleted}/{session.totalExercises} exercícios
+              </div>
             </div>
           </div>
         );

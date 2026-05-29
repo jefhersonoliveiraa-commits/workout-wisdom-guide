@@ -2,9 +2,8 @@ import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import { getTopSetHistory, getVolumeHistory, getExerciseSessions } from "@/lib/storage";
 import { TrainerNav } from "@/components/trainer/TrainerNav";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { PerformanceView } from "@/components/workout/PerformanceView";
 import { Edit3 } from "lucide-react";
 
 async function fetchStudentProfile(studentId: string) {
@@ -54,8 +53,6 @@ type TabKey = 'overview' | 'performance' | 'plan';
 export default function StudentDetailPage() {
   const { studentId } = useParams<{ studentId: string }>();
   const [tab, setTab] = useState<TabKey>('overview');
-  const [selectedExercise, setSelectedExercise] = useState("");
-  const [mode, setMode] = useState<'top' | 'volume'>('top');
 
   const { data: studentProfile } = useQuery({
     queryKey: ['student-profile', studentId],
@@ -74,35 +71,6 @@ export default function StudentDetailPage() {
     queryFn: () => fetchRecentSessions(studentId!),
     enabled: !!studentId,
   });
-
-  const allExercises = plan?.training_days
-    .filter((d: any) => !d.is_rest)
-    .flatMap((d: any) => d.exercises) ?? [];
-
-  const activeExerciseId = selectedExercise || allExercises[0]?.id || "";
-
-  const { data: topHistory = [] } = useQuery({
-    queryKey: ['trainer-top-history', activeExerciseId, studentId],
-    queryFn: () => getTopSetHistory(activeExerciseId, studentId!),
-    enabled: !!activeExerciseId && tab === 'performance',
-  });
-
-  const { data: volHistory = [] } = useQuery({
-    queryKey: ['trainer-vol-history', activeExerciseId, studentId],
-    queryFn: () => getVolumeHistory(activeExerciseId, studentId!),
-    enabled: !!activeExerciseId && tab === 'performance',
-  });
-
-  const { data: sessions = [] } = useQuery({
-    queryKey: ['trainer-exercise-sessions', activeExerciseId, studentId],
-    queryFn: () => getExerciseSessions(activeExerciseId, studentId!),
-    enabled: !!activeExerciseId && tab === 'performance',
-  });
-
-  const chartData = (mode === 'top' ? topHistory : volHistory).map(e => ({
-    date: new Date(e.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' }),
-    ...(mode === 'top' ? { peso: (e as any).weight } : { volume: Math.round((e as any).volume) }),
-  }));
 
   const tabs: { key: TabKey; label: string }[] = [
     { key: 'overview', label: 'Visão Geral' },
@@ -179,75 +147,7 @@ export default function StudentDetailPage() {
           )}
 
           {tab === 'performance' && (
-            <div>
-              <div className="bg-bg2 border border-border rounded-lg p-3 mb-4">
-                <label className="text-[11px] text-muted-foreground block mb-2">Exercício:</label>
-                <select
-                  value={activeExerciseId}
-                  onChange={e => setSelectedExercise(e.target.value)}
-                  className="w-full bg-bg3 border border-border rounded-sm p-2 text-[13px] text-foreground outline-none focus:border-primary"
-                >
-                  {plan?.training_days?.filter((d: any) => !d.is_rest).map((d: any) => (
-                    <optgroup key={d.id} label={d.title}>
-                      {d.exercises.map((ex: any) => (
-                        <option key={ex.id} value={ex.id}>{ex.name}</option>
-                      ))}
-                    </optgroup>
-                  ))}
-                </select>
-                <div className="flex gap-2 mt-3">
-                  {(['top', 'volume'] as const).map(m => (
-                    <button
-                      key={m}
-                      onClick={() => setMode(m)}
-                      className={`flex-1 text-[11px] py-2 rounded-[6px] border transition-colors ${
-                        mode === m ? 'bg-primary/20 text-primary border-primary/40' : 'bg-bg3 text-muted-foreground border-border'
-                      }`}
-                    >
-                      {m === 'top' ? 'Top set (kg)' : 'Volume total'}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {chartData.length > 0 ? (
-                <div className="bg-bg2 border border-border rounded-lg p-4 mb-4">
-                  <ResponsiveContainer width="100%" height={200}>
-                    <LineChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(0 0% 100% / 0.06)" />
-                      <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(0 0% 40%)' }} axisLine={{ stroke: 'hsl(0 0% 100% / 0.08)' }} tickLine={false} />
-                      <YAxis tick={{ fontSize: 10, fill: 'hsl(0 0% 40%)' }} axisLine={{ stroke: 'hsl(0 0% 100% / 0.08)' }} tickLine={false} unit={mode === 'top' ? 'kg' : ''} />
-                      <Tooltip contentStyle={{ background: 'hsl(0 0% 11.8%)', border: '1px solid hsl(0 0% 100% / 0.14)', borderRadius: '8px', fontSize: '12px', color: 'hsl(0 0% 94.1%)' }} />
-                      <Line type="monotone" dataKey={mode === 'top' ? 'peso' : 'volume'} stroke="hsl(79 88% 62%)" strokeWidth={2} dot={{ fill: 'hsl(79 88% 62%)', r: 4 }} activeDot={{ r: 6 }} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              ) : (
-                <div className="bg-bg2 border border-border rounded-lg p-6 text-center mb-4">
-                  <p className="text-[13px] text-muted-foreground">Sem dados de evolução para este exercício ainda.</p>
-                </div>
-              )}
-
-              {sessions.slice(0, 5).map((s, i) => (
-                <div key={i} className="bg-bg2 border border-border rounded-lg p-3 mb-2">
-                  <div className="text-[12px] font-medium text-foreground mb-1">
-                    {new Date(s.date + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' })}
-                  </div>
-                  <div className="flex flex-wrap gap-[6px]">
-                    {s.sets.map((set, j) => (
-                      <span key={j} className={`text-[11px] font-mono rounded-[6px] px-2 py-1 border ${
-                        set.weight > 0 ? 'bg-primary/[0.08] border-primary/30 text-primary' : 'bg-bg4 border-border text-muted-foreground/50'
-                      }`}>
-                        {set.weight > 0 ? `${set.weight}kg × ${set.reps}` : '—'}
-                      </span>
-                    ))}
-                  </div>
-                  {s.observation && (
-                    <p className="text-[11px] text-muted-foreground mt-2 italic">"{s.observation}"</p>
-                  )}
-                </div>
-              ))}
-            </div>
+            <PerformanceView studentId={studentId!} plan={plan ?? null} />
           )}
 
           {tab === 'plan' && (
