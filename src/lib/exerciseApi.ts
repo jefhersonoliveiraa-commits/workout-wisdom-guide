@@ -33,7 +33,7 @@ export async function searchExercises(term: string): Promise<ExerciseSuggestion[
   try {
     // NOVA URL: Utilizando exerciseinfo no lugar do antigo exercise/search
     const res = await fetch(
-      `${BASE}/exerciseinfo/?language=2&search=${encodeURIComponent(q)}&limit=15`
+      `${BASE}/exerciseinfo/?search=${encodeURIComponent(q)}&term=${encodeURIComponent(q)}&limit=20`
     );
     
     if (!res.ok) return [];
