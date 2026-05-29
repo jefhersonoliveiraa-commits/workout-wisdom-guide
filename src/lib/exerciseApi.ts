@@ -31,23 +31,43 @@ export async function searchExercises(term: string): Promise<ExerciseSuggestion[
   }
 
   try {
+    // NOVA URL: Utilizando exerciseinfo no lugar do antigo exercise/search
     const res = await fetch(
-      `${BASE}/exercise/search/?term=${encodeURIComponent(q)}&language=2&format=json`
+      `${BASE}/exerciseinfo/?language=2&search=${encodeURIComponent(q)}&limit=15`
     );
+    
     if (!res.ok) return [];
     const json = await res.json();
-    const results: ExerciseSuggestion[] = (json.suggestions ?? [])
-      .map((s: any) => ({
-        id: s.data?.base_id ?? s.data?.id ?? 0,
-        name: s.value ?? s.data?.name ?? '',
-        category: s.data?.category ?? null,
-        image: absImage(s.data?.image_thumbnail ?? s.data?.image ?? null),
-      }))
+    
+    // O novo endpoint retorna um array de objetos dentro de 'results'
+    const rawResults = json.results || json.suggestions || [];
+    
+    const results: ExerciseSuggestion[] = rawResults
+      .map((s: any) => {
+        // Formato antigo (fallback de segurança)
+        if (s.data) {
+          return {
+            id: s.data.base_id ?? s.data.id ?? 0,
+            name: s.value ?? s.data.name ?? '',
+            category: s.data.category ?? null,
+            image: absImage(s.data.image_thumbnail ?? s.data.image ?? null),
+          };
+        }
+        
+        // Novo Formato (exerciseinfo)
+        return {
+          id: s.id,
+          name: s.name,
+          category: s.category?.name ?? null,
+          image: absImage(s.images?.[0]?.image ?? null), // Pega a primeira imagem, se houver
+        };
+      })
       .filter((r: ExerciseSuggestion) => r.name);
 
     sessionStorage.setItem(cacheKey, JSON.stringify(results));
     return results;
-  } catch {
+  } catch (error) {
+    console.error("Erro ao buscar exercícios:", error);
     return [];
   }
 }
