@@ -35,12 +35,13 @@ export default function StudentApp() {
 
   useEffect(() => {
     if (!user?.id) return;
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
     shouldPromptWeighIn(user.id).then(should => {
       if (should && !wasDismissedToday()) {
-        const timeout = setTimeout(() => setShowWeighIn(true), 2000);
-        return () => clearTimeout(timeout);
+        timeoutId = setTimeout(() => setShowWeighIn(true), 2000);
       }
     });
+    return () => { if (timeoutId) clearTimeout(timeoutId); };
   }, [user?.id]);
 
   const trainingDays = plan?.training_days ?? [];

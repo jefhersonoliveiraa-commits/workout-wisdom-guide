@@ -127,6 +127,24 @@ export type Database = {
         }
         Relationships: []
       }
+      trainer_student: {
+        Row: {
+          assigned_at: string
+          student_id: string
+          trainer_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          student_id: string
+          trainer_id: string
+        }
+        Update: {
+          assigned_at?: string
+          student_id?: string
+          trainer_id?: string
+        }
+        Relationships: []
+      }
       training_days: {
         Row: {
           color_class: string
@@ -264,8 +282,9 @@ export type Database = {
           description: string | null
           id: string
           is_active: boolean
+          is_template: boolean
           name: string
-          student_id: string
+          student_id: string | null
           trainer_id: string
         }
         Insert: {
@@ -273,8 +292,9 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean
+          is_template?: boolean
           name?: string
-          student_id: string
+          student_id?: string | null
           trainer_id: string
         }
         Update: {
@@ -282,8 +302,9 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean
+          is_template?: boolean
           name?: string
-          student_id?: string
+          student_id?: string | null
           trainer_id?: string
         }
         Relationships: []

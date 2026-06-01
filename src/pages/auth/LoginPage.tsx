@@ -23,7 +23,7 @@ export default function LoginPage() {
     setIsLoading(true);
     const { error, data: authData } = await supabase.auth.signInWithPassword({ email: data.email, password: data.password });
     if (error) { toast.error('Email ou senha incorretos'); setIsLoading(false); return; }
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', authData.user.id).single();
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', authData.user.id).maybeSingle();
     navigate(profile?.role === 'trainer' ? '/trainer' : '/student', { replace: true });
   }
 

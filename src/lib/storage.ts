@@ -50,9 +50,11 @@ export async function saveSet(
     .eq('student_id', studentId)
     .eq('exercise_id', exerciseId)
     .eq('log_date', date)
-    .single();
+    .maybeSingle();
 
-  const setsData: SetLog[] = existing?.sets_data ? [...existing.sets_data] : [];
+  const setsData: SetLog[] = Array.isArray(existing?.sets_data)
+    ? [...(existing!.sets_data as unknown as SetLog[])]
+    : [];
   while (setsData.length <= setIndex) setsData.push({ weight: 0, reps: 0 });
   setsData[setIndex] = set;
 
@@ -62,7 +64,7 @@ export async function saveSet(
     exercise_id: exerciseId,
     plan_id: planId ?? null,
     log_date: date,
-    sets_data: setsData,
+    sets_data: setsData as unknown as any,
   });
 }
 
@@ -79,7 +81,7 @@ export async function saveObservation(
     .eq('student_id', studentId)
     .eq('exercise_id', exerciseId)
     .eq('log_date', date)
-    .single();
+    .maybeSingle();
 
   if (existing) {
     await supabase.from('workout_logs').update({ observation }).eq('id', existing.id);
@@ -88,7 +90,7 @@ export async function saveObservation(
       student_id: studentId,
       exercise_id: exerciseId,
       log_date: date,
-      sets_data: [],
+      sets_data: [] as unknown as any,
       observation,
     });
   }
@@ -101,10 +103,10 @@ export async function getTodaySession(exerciseId: string, studentId: string): Pr
     .eq('student_id', studentId)
     .eq('exercise_id', exerciseId)
     .eq('log_date', today())
-    .single();
+    .maybeSingle();
 
   if (!data) return null;
-  return { exerciseId, date: today(), sets: data.sets_data ?? [], observation: data.observation ?? '' };
+  return { exerciseId, date: today(), sets: (data.sets_data ?? []) as unknown as SetLog[], observation: data.observation ?? '' };
 }
 
 export async function getLastSession(exerciseId: string, studentId: string): Promise<ExerciseSession | null> {
@@ -115,10 +117,10 @@ export async function getLastSession(exerciseId: string, studentId: string): Pro
     .eq('exercise_id', exerciseId)
     .order('log_date', { ascending: false })
     .limit(1)
-    .single();
+    .maybeSingle();
 
   if (!data) return null;
-  return { exerciseId, date: data.log_date, sets: data.sets_data ?? [], observation: data.observation ?? '' };
+  return { exerciseId, date: data.log_date, sets: (data.sets_data ?? []) as unknown as SetLog[], observation: data.observation ?? '' };
 }
 
 export async function getTopSetHistory(
@@ -136,7 +138,8 @@ export async function getTopSetHistory(
 
   return data
     .map(row => {
-      const valid = (row.sets_data as SetLog[]).filter(s => s.weight > 0);
+      const sets = (row.sets_data ?? []) as unknown as SetLog[];
+      const valid = sets.filter(s => s.weight > 0);
       if (valid.length === 0) return null;
       const top = valid.reduce((a, b) => (b.weight > a.weight ? b : a));
       return { date: row.log_date, weight: top.weight, reps: top.reps };
@@ -160,7 +163,7 @@ export async function getVolumeHistory(
   return data
     .map(row => ({
       date: row.log_date,
-      volume: (row.sets_data as SetLog[]).reduce((sum, s) => sum + s.weight * s.reps, 0),
+      volume: ((row.sets_data ?? []) as unknown as SetLog[]).reduce((sum, s) => sum + s.weight * s.reps, 0),
     }))
     .filter(s => s.volume > 0);
 }
@@ -177,7 +180,7 @@ export async function getExerciseSessions(exerciseId: string, studentId: string)
   return data.map(row => ({
     exerciseId,
     date: row.log_date,
-    sets: row.sets_data ?? [],
+    sets: (row.sets_data ?? []) as unknown as SetLog[],
     observation: row.observation ?? '',
   }));
 }

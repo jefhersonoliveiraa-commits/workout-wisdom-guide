@@ -7,7 +7,7 @@ import { PerformanceView } from "@/components/workout/PerformanceView";
 import { Edit3 } from "lucide-react";
 
 async function fetchStudentProfile(studentId: string) {
-  const { data } = await supabase.from('profiles').select('*').eq('id', studentId).single();
+  const { data } = await supabase.from('profiles').select('*').eq('id', studentId).maybeSingle();
   return data;
 }
 
@@ -19,7 +19,7 @@ async function fetchStudentPlanFull(studentId: string) {
     .eq('is_active', true)
     .order('created_at', { ascending: false })
     .limit(1)
-    .single();
+    .maybeSingle();
 
   if (!plan) return null;
 

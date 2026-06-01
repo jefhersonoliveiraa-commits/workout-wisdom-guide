@@ -174,8 +174,6 @@ export default function PlanBuilderPage() {
 
       const plan = { id: resolvedPlanId } as { id: string };
 
-      if (planError || !plan) throw planError ?? new Error('Falha ao criar ficha');
-
       for (let dayIdx = 0; dayIdx < days.length; dayIdx++) {
         const d = days[dayIdx];
         const { data: day, error: dayError } = await supabase.from('training_days').insert({
