@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
+import { useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import type { DbWorkoutPlan } from '@/types/plan';
 
@@ -10,6 +11,20 @@ async function fetchStudentPlan(studentId: string): Promise<DbWorkoutPlan | null
   const { data: exercises } = await supabase.from('exercises').select('*').in('day_id', days.map((d: { id: string }) => d.id)).order('sort_order', { ascending: true });
   return { ...plan, training_days: days.map((d: { id: string }) => ({ ...d, exercises: (exercises ?? []).filter((e: { day_id: string }) => e.day_id === d.id) })) } as unknown as DbWorkoutPlan;
 }
+
 export function useStudentPlan(studentId: string | undefined) {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!studentId) return;
+    const channel = supabase
+      .channel(`student-plan-${studentId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'workout_plans', filter: `student_id=eq.${studentId}` }, () => {
+        queryClient.invalidateQueries({ queryKey: ['student-plan', studentId] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [studentId, queryClient]);
+
   return useQuery({ queryKey: ['student-plan', studentId], queryFn: () => fetchStudentPlan(studentId!), enabled: !!studentId, staleTime: 5 * 60 * 1000 });
 }

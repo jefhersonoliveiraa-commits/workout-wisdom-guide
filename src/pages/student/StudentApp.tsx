@@ -29,7 +29,7 @@ export default function StudentApp() {
 
   const [currentDay, setCurrentDay] = useState(getTodayDayIndex);
   const [currentPage, setCurrentPage] = useState("treino");
-  const workout = useWorkoutState();
+  const workout = useWorkoutState(user!.id);
   const timer = useRestTimer();
   const [showWeighIn, setShowWeighIn] = useState(false);
 

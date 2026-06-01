@@ -4,9 +4,9 @@ import { supabase, type Profile } from '@/lib/supabase';
 
 interface AuthContextValue {
   session: Session | null; user: User | null; profile: Profile | null;
-  isLoading: boolean; signOut: () => Promise<void>;
+  isLoading: boolean; signOut: () => Promise<void>; refetchProfile: () => Promise<void>;
 }
-const AuthContext = createContext<AuthContextValue>({ session: null, user: null, profile: null, isLoading: true, signOut: async () => {} });
+const AuthContext = createContext<AuthContextValue>({ session: null, user: null, profile: null, isLoading: true, signOut: async () => {}, refetchProfile: async () => {} });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
@@ -31,8 +31,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
   async function signOut() { await supabase.auth.signOut(); setProfile(null); }
+  const refetchProfile = async () => { if (session?.user) await fetchProfile(session.user.id); };
   return (
-    <AuthContext.Provider value={{ session, user: session?.user ?? null, profile, isLoading, signOut }}>
+    <AuthContext.Provider value={{ session, user: session?.user ?? null, profile, isLoading, signOut, refetchProfile }}>
       {children}
     </AuthContext.Provider>
   );

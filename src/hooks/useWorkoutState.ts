@@ -7,42 +7,38 @@ interface WorkoutState {
 
 const STORAGE_KEY = "workout-tracker-state";
 
-function loadState(): WorkoutState {
+function loadState(userId: string): WorkoutState {
+  const key = `${STORAGE_KEY}:${userId}`;
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const saved = localStorage.getItem(key);
     if (saved) {
       const parsed = JSON.parse(saved);
-      // Reset if it's a new day
-      const savedDate = localStorage.getItem(STORAGE_KEY + "-date");
+      const savedDate = localStorage.getItem(key + "-date");
       const today = new Date().toDateString();
       if (savedDate !== today) {
-        localStorage.setItem(STORAGE_KEY + "-date", today);
+        localStorage.setItem(key + "-date", today);
         return { setsCompleted: {}, exercisesOpen: {} };
       }
       return parsed;
     }
   } catch {}
-  localStorage.setItem(STORAGE_KEY + "-date", new Date().toDateString());
+  localStorage.setItem(key + "-date", new Date().toDateString());
   return { setsCompleted: {}, exercisesOpen: {} };
 }
 
-export function useWorkoutState() {
-  const [state, setState] = useState<WorkoutState>(loadState);
-
-  const save = useCallback((newState: WorkoutState) => {
-    setState(newState);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(newState));
-  }, []);
+export function useWorkoutState(userId: string) {
+  const storageKey = `${STORAGE_KEY}:${userId}`;
+  const [state, setState] = useState<WorkoutState>(() => loadState(userId));
 
   const toggleSet = useCallback((exId: string, setIndex: number, totalSets: number) => {
     setState(prev => {
       const sets = [...(prev.setsCompleted[exId] || Array(totalSets).fill(false))];
       sets[setIndex] = !sets[setIndex];
       const next = { ...prev, setsCompleted: { ...prev.setsCompleted, [exId]: sets } };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      localStorage.setItem(storageKey, JSON.stringify(next));
       return next;
     });
-  }, []);
+  }, [storageKey]);
 
   const toggleAllSets = useCallback((exId: string, totalSets: number) => {
     setState(prev => {
@@ -50,10 +46,10 @@ export function useWorkoutState() {
       const allDone = current.every(Boolean);
       const newSets = Array(totalSets).fill(!allDone);
       const next = { ...prev, setsCompleted: { ...prev.setsCompleted, [exId]: newSets } };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      localStorage.setItem(storageKey, JSON.stringify(next));
       return next;
     });
-  }, []);
+  }, [storageKey]);
 
   const toggleExOpen = useCallback((exId: string) => {
     setState(prev => {
@@ -61,10 +57,10 @@ export function useWorkoutState() {
         ...prev,
         exercisesOpen: { ...prev.exercisesOpen, [exId]: !prev.exercisesOpen[exId] },
       };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      localStorage.setItem(storageKey, JSON.stringify(next));
       return next;
     });
-  }, []);
+  }, [storageKey]);
 
   const isExerciseDone = useCallback((exId: string, totalSets: number) => {
     const sets = state.setsCompleted[exId];

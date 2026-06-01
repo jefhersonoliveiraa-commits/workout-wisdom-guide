@@ -4,28 +4,29 @@ export function useRestTimer() {
   const [seconds, setSeconds] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [totalSeconds, setTotalSeconds] = useState(0);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const endTimeRef = useRef<number>(0);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    if (isRunning && seconds > 0) {
+    if (isRunning) {
       intervalRef.current = setInterval(() => {
-        setSeconds(prev => {
-          if (prev <= 1) {
-            setIsRunning(false);
-            // Vibrate if available
-            if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+        const remaining = Math.ceil((endTimeRef.current - Date.now()) / 1000);
+        if (remaining <= 0) {
+          setSeconds(0);
+          setIsRunning(false);
+          if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+        } else {
+          setSeconds(remaining);
+        }
+      }, 200);
     }
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [isRunning, seconds]);
+  }, [isRunning]);
 
   const startTimer = useCallback((durationSeconds: number) => {
+    endTimeRef.current = Date.now() + durationSeconds * 1000;
     setTotalSeconds(durationSeconds);
     setSeconds(durationSeconds);
     setIsRunning(true);
