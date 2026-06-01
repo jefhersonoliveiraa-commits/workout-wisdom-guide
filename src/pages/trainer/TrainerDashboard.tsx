@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, UserPlus, ChevronRight, ClipboardList, Edit2, UserCheck } from "lucide-react";
+import { Plus, UserPlus, ChevronRight, ClipboardList, Edit2, UserCheck, Search } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { TrainerNav } from "@/components/trainer/TrainerNav";
@@ -21,6 +21,12 @@ interface TemplatePlan {
   name: string;
   description: string | null;
   created_at: string;
+}
+
+interface StudentSearchResult {
+  id: string;
+  full_name: string;
+  already_has_trainer: boolean;
 }
 
 async function fetchStudents(trainerId: string): Promise<StudentInfo[]> {
@@ -68,21 +74,17 @@ async function fetchTemplates(trainerId: string): Promise<TemplatePlan[]> {
   return data ?? [];
 }
 
-async function fetchAllStudents(): Promise<{ id: string; full_name: string }[]> {
-  const { data } = await supabase
-    .from('profiles')
-    .select('id, full_name')
-    .eq('role', 'student')
-    .order('full_name');
-  return data ?? [];
-}
-
 export default function TrainerDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [linkId, setLinkId] = useState("");
+
+  const [linkSearch, setLinkSearch] = useState("");
+  const [linkResults, setLinkResults] = useState<StudentSearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   const [linking, setLinking] = useState(false);
+  const searchTimeout = useRef<ReturnType<typeof setTimeout>>();
+
   const [assigningTemplate, setAssigningTemplate] = useState<TemplatePlan | null>(null);
   const [assignStudentId, setAssignStudentId] = useState("");
   const [assigning, setAssigning] = useState(false);
@@ -93,32 +95,49 @@ export default function TrainerDashboard() {
     enabled: !!user?.id,
   });
 
-  const { data: templates = [], refetch: refetchTemplates } = useQuery({
+  const { data: templates = [] } = useQuery({
     queryKey: ['trainer-templates', user?.id],
     queryFn: () => fetchTemplates(user!.id),
     enabled: !!user?.id,
   });
 
-  const { data: allStudents = [] } = useQuery({
-    queryKey: ['all-students'],
-    queryFn: fetchAllStudents,
-    enabled: !!assigningTemplate,
-  });
+  const handleLinkSearchChange = (value: string) => {
+    setLinkSearch(value);
+    clearTimeout(searchTimeout.current);
+    if (value.trim().length < 2) {
+      setLinkResults([]);
+      setIsSearching(false);
+      return;
+    }
+    setIsSearching(true);
+    searchTimeout.current = setTimeout(async () => {
+      const { data } = await supabase.rpc('search_students_for_linking', {
+        search_name: value.trim(),
+      });
+      setLinkResults((data as StudentSearchResult[]) ?? []);
+      setIsSearching(false);
+    }, 400);
+  };
 
-  const handleLinkById = async () => {
-    if (!user?.id || !linkId.trim()) return;
+  const handleLinkStudent = async (studentId: string, alreadyHasTrainer: boolean) => {
+    if (alreadyHasTrainer) {
+      toast.error('Este aluno já possui um treinador. Peça para ele se desvincular primeiro.');
+      return;
+    }
+    if (!user?.id) return;
     setLinking(true);
     const { error } = await supabase.from('trainer_student').insert({
       trainer_id: user.id,
-      student_id: linkId.trim(),
+      student_id: studentId,
     });
     setLinking(false);
     if (error) {
       toast.error('Erro ao vincular: ' + error.message);
     } else {
       toast.success('Aluno vinculado!');
+      setLinkSearch('');
+      setLinkResults([]);
       refetchStudents();
-      setLinkId("");
     }
   };
 
@@ -126,7 +145,6 @@ export default function TrainerDashboard() {
     if (!assigningTemplate || !assignStudentId || !user?.id) return;
     setAssigning(true);
 
-    // Copia o plano template para o aluno selecionado
     const { data: newPlan, error: planErr } = await supabase
       .from('workout_plans')
       .insert({
@@ -134,7 +152,6 @@ export default function TrainerDashboard() {
         student_id: assignStudentId,
         name: assigningTemplate.name,
         description: assigningTemplate.description,
-        // Cria inativa; só ativa depois de copiar dias/exercícios (evita Realtime com ficha vazia)
         is_active: false,
         is_template: false,
       })
@@ -147,7 +164,6 @@ export default function TrainerDashboard() {
       return;
     }
 
-    // Copia os dias e exercícios
     const { data: days } = await supabase
       .from('training_days')
       .select('*')
@@ -201,8 +217,6 @@ export default function TrainerDashboard() {
       }
     }
 
-    // Agora que a ficha está completa (dias + exercícios), ativa para o aluno.
-    // Este UPDATE é o que dispara o Realtime no app do aluno, já com a ficha pronta.
     const { error: activateErr } = await supabase
       .from('workout_plans')
       .update({ is_active: true })
@@ -227,7 +241,6 @@ export default function TrainerDashboard() {
 
       <div className="flex-1 overflow-y-auto p-4 max-w-2xl mx-auto w-full">
 
-        {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-[20px] font-semibold text-foreground">Meus Alunos</h1>
           <Link to="/trainer/plans/new">
@@ -238,29 +251,55 @@ export default function TrainerDashboard() {
           </Link>
         </div>
 
-        {/* Vincular aluno */}
         <div className="bg-bg2 border border-border rounded-xl p-4 mb-6">
           <div className="text-[12px] font-semibold text-foreground mb-1 flex items-center gap-1.5">
             <UserPlus size={14} />
             Vincular Aluno
           </div>
           <p className="text-[11px] text-muted-foreground mb-3">
-            Cole o ID do aluno (disponível na tela de Perfil dele).
+            Busque pelo nome do aluno. Alunos já vinculados a outro treinador não podem ser adicionados.
           </p>
-          <div className="flex gap-2">
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
-              value={linkId}
-              onChange={e => setLinkId(e.target.value)}
-              placeholder="ID do aluno (UUID)"
-              className="flex-1 text-[13px]"
+              value={linkSearch}
+              onChange={e => handleLinkSearchChange(e.target.value)}
+              placeholder="Digite o nome do aluno..."
+              className="pl-8 text-[13px]"
             />
-            <Button size="sm" onClick={handleLinkById} disabled={linking || !linkId.trim()}>
-              Vincular
-            </Button>
           </div>
+
+          {linkSearch.trim().length >= 2 && (
+            <div className="mt-2 border border-border rounded-lg overflow-hidden">
+              {isSearching ? (
+                <div className="p-3 text-[12px] text-muted-foreground text-center">Buscando...</div>
+              ) : linkResults.length === 0 ? (
+                <div className="p-3 text-[12px] text-muted-foreground text-center">Nenhum aluno encontrado.</div>
+              ) : (
+                linkResults.map(student => (
+                  <button
+                    key={student.id}
+                    onClick={() => handleLinkStudent(student.id, student.already_has_trainer)}
+                    disabled={linking}
+                    className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-primary/5 border-b border-border last:border-0 transition-colors text-left"
+                  >
+                    <span className="text-[13px] text-foreground">{student.full_name}</span>
+                    {student.already_has_trainer ? (
+                      <span className="text-[10px] text-workout-orange bg-workout-orange/10 border border-workout-orange/20 rounded px-2 py-0.5 flex-shrink-0">
+                        Já tem treinador
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-primary bg-primary/10 border border-primary/20 rounded px-2 py-0.5 flex-shrink-0">
+                        Vincular
+                      </span>
+                    )}
+                  </button>
+                ))
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Lista de alunos */}
         <div className="text-[10px] font-semibold tracking-[0.12em] uppercase text-muted-foreground mb-3">
           Alunos vinculados
         </div>
@@ -269,7 +308,7 @@ export default function TrainerDashboard() {
           <div className="bg-bg2 border border-border rounded-xl p-8 text-center mb-6">
             <div className="text-[36px] mb-3">👥</div>
             <p className="text-[13px] text-muted-foreground">
-              Nenhum aluno vinculado ainda. Cole o ID acima para começar.
+              Nenhum aluno vinculado ainda. Busque pelo nome acima para começar.
             </p>
           </div>
         ) : (
@@ -296,7 +335,6 @@ export default function TrainerDashboard() {
           </div>
         )}
 
-        {/* Fichas Modelo */}
         <div className="flex items-center justify-between mb-3">
           <div className="text-[10px] font-semibold tracking-[0.12em] uppercase text-muted-foreground">
             Fichas Modelo
@@ -345,7 +383,6 @@ export default function TrainerDashboard() {
         )}
       </div>
 
-      {/* Modal de atribuição */}
       {assigningTemplate && (
         <div className="fixed inset-0 bg-black/70 z-50 flex items-end sm:items-center justify-center p-4">
           <div className="bg-bg2 border border-border rounded-2xl w-full max-w-sm p-5">
@@ -356,16 +393,22 @@ export default function TrainerDashboard() {
 
             <div className="mb-4">
               <label className="text-[11px] text-muted-foreground block mb-2">Aluno</label>
-              <select
-                value={assignStudentId}
-                onChange={e => setAssignStudentId(e.target.value)}
-                className="w-full bg-bg3 border border-border rounded-lg p-2.5 text-[13px] text-foreground outline-none focus:border-primary"
-              >
-                <option value="">Selecione um aluno...</option>
-                {allStudents.map(s => (
-                  <option key={s.id} value={s.id}>{s.full_name}</option>
-                ))}
-              </select>
+              {students.length === 0 ? (
+                <p className="text-[12px] text-muted-foreground text-center py-3">
+                  Nenhum aluno vinculado ainda.
+                </p>
+              ) : (
+                <select
+                  value={assignStudentId}
+                  onChange={e => setAssignStudentId(e.target.value)}
+                  className="w-full bg-bg3 border border-border rounded-lg p-2.5 text-[13px] text-foreground outline-none focus:border-primary"
+                >
+                  <option value="">Selecione um aluno...</option>
+                  {students.map(s => (
+                    <option key={s.id} value={s.id}>{s.full_name}</option>
+                  ))}
+                </select>
+              )}
             </div>
 
             <div className="flex gap-2">
