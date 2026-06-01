@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
 import { loadBodyWeightHistory, getLatestBodyWeight, getWeightChange } from "@/lib/bodyWeight";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { Input } from "@/components/ui/input";
@@ -17,6 +18,7 @@ interface ProfilePageProps {
 
 export function ProfilePage({ studentId, profile, onOpenWeighIn }: ProfilePageProps) {
   const queryClient = useQueryClient();
+  const { refetchProfile } = useAuth();
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState(profile.full_name);
   const [editHeight, setEditHeight] = useState(profile.height_m ? String(profile.height_m) : "");
@@ -64,11 +66,9 @@ export function ProfilePage({ studentId, profile, onOpenWeighIn }: ProfilePagePr
       toast.error("Erro ao salvar: " + error.message);
       return;
     }
-    // Invalida o cache do perfil no AuthContext recarregando a página é o caminho mais simples
     toast.success("Perfil atualizado!");
     setEditing(false);
-    // Força reload para o AuthContext buscar o novo perfil
-    setTimeout(() => window.location.reload(), 800);
+    await refetchProfile();
   };
 
   return (
