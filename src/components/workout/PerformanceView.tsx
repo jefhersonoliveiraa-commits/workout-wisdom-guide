@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getTopSetHistory, getVolumeHistory, getExerciseSessions } from "@/lib/storage";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine } from "recharts";
-import type { DbWorkoutPlan, DbTrainingDay } from "@/types/plan";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import type { DbWorkoutPlan } from "@/types/plan";
 import { TrendingUp, TrendingDown, Minus, ChevronDown, ChevronUp } from "lucide-react";
 
 interface PerformanceViewProps {
