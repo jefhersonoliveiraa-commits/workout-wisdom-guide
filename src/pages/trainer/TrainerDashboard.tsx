@@ -134,7 +134,8 @@ export default function TrainerDashboard() {
         student_id: assignStudentId,
         name: assigningTemplate.name,
         description: assigningTemplate.description,
-        is_active: true,
+        // Cria inativa; só ativa depois de copiar dias/exercícios (evita Realtime com ficha vazia)
+        is_active: false,
         is_template: false,
       })
       .select()
@@ -198,6 +199,18 @@ export default function TrainerDashboard() {
           }))
         );
       }
+    }
+
+    // Agora que a ficha está completa (dias + exercícios), ativa para o aluno.
+    // Este UPDATE é o que dispara o Realtime no app do aluno, já com a ficha pronta.
+    const { error: activateErr } = await supabase
+      .from('workout_plans')
+      .update({ is_active: true })
+      .eq('id', newPlan.id);
+    if (activateErr) {
+      toast.error('Erro ao ativar a ficha');
+      setAssigning(false);
+      return;
     }
 
     toast.success('Ficha atribuída com sucesso!');

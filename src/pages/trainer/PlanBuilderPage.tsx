@@ -149,6 +149,8 @@ export default function PlanBuilderPage() {
           description: planDesc.trim() || null,
           student_id: isTemplate ? null : studentId,
           is_template: isTemplate,
+          // Esconde a ficha enquanto recria os dias/exercícios (evita Realtime com ficha vazia)
+          is_active: false,
         }).eq('id', planId);
         if (planError) throw planError;
         resolvedPlanId = planId;
@@ -165,7 +167,8 @@ export default function PlanBuilderPage() {
           student_id: isTemplate ? null : studentId,
           name: planName.trim(),
           description: planDesc.trim() || null,
-          is_active: true,
+          // Cria inativa; ativa só no final, com dias/exercícios já inseridos
+          is_active: false,
           is_template: isTemplate,
         }).select('id').single();
         if (planError || !plan) throw planError ?? new Error('Falha ao criar ficha');
@@ -218,9 +221,22 @@ export default function PlanBuilderPage() {
         }
       }
 
+      // Ativa a ficha agora que todos os dias/exercícios existem.
+      // É este passo que o app do aluno recebe via Realtime, já com a ficha pronta.
+      const { error: activateError } = await supabase
+        .from('workout_plans')
+        .update({ is_active: true })
+        .eq('id', resolvedPlanId);
+      if (activateError) throw activateError;
+
       toast.success(isEdit ? 'Ficha atualizada!' : 'Ficha criada com sucesso!');
       navigate('/trainer');
     } catch (err: any) {
+      // Em edição, se algo falhou no meio, restaura a visibilidade da ficha
+      // que o aluno já tinha (não deixa o aluno sem ficha por causa do erro).
+      if (isEdit && planId) {
+        await supabase.from('workout_plans').update({ is_active: true }).eq('id', planId);
+      }
       toast.error('Erro ao salvar: ' + (err?.message ?? 'Tente novamente'));
     } finally {
       setSaving(false);
