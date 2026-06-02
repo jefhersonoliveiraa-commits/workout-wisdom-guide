@@ -83,7 +83,7 @@ export default function TrainerDashboard() {
   const [linkResults, setLinkResults] = useState<StudentSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [linking, setLinking] = useState(false);
-  const searchTimeout = useRef<ReturnType<typeof setTimeout>>();
+  const searchTimeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const [assigningTemplate, setAssigningTemplate] = useState<TemplatePlan | null>(null);
   const [assignStudentId, setAssignStudentId] = useState("");
