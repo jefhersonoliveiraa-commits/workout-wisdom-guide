@@ -71,8 +71,8 @@ export async function searchExercises(term: string): Promise<ExerciseSuggestion[
       let exercises = [];
       try {
         exercises = JSON.parse(textData);
-      } catch (e) {
-        console.error("A API retornou um formato inesperado:", textData);
+      } catch {
+        // Resposta da API em formato inesperado — segue com lista vazia.
       }
 
       if (Array.isArray(exercises) && exercises.length > 0) {
