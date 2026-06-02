@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 export interface BodyWeightEntry { date: string; weight: number; bmi: number; }
-const DISMISSED_KEY = 'workout-body-weight-dismissed';
+const DISMISSED_KEY_PREFIX = 'workout-body-weight-dismissed';
+const dismissedKey = (studentId?: string) => studentId ? `${DISMISSED_KEY_PREFIX}:${studentId}` : DISMISSED_KEY_PREFIX;
 const CHECK_INTERVAL_DAYS = 14;
 
 export async function loadBodyWeightHistory(studentId: string): Promise<BodyWeightEntry[]> {
