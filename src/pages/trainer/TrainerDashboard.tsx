@@ -132,7 +132,11 @@ export default function TrainerDashboard() {
     });
     setLinking(false);
     if (error) {
-      toast.error('Erro ao vincular: ' + error.message);
+      if (import.meta.env.DEV) console.error('[TrainerDashboard] link failed', error);
+      const msg = (error as { code?: string }).code === '23505'
+        ? 'Este aluno já está vinculado.'
+        : 'Erro ao vincular. Tente novamente.';
+      toast.error(msg);
     } else {
       toast.success('Aluno vinculado!');
       setLinkSearch('');
