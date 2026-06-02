@@ -63,7 +63,8 @@ export function ProfilePage({ studentId, profile, onOpenWeighIn }: ProfilePagePr
 
     setSaving(false);
     if (error) {
-      toast.error("Erro ao salvar: " + error.message);
+      if (import.meta.env.DEV) console.error('[Profile] save failed', error);
+      toast.error("Erro ao salvar. Tente novamente.");
       return;
     }
     toast.success("Perfil atualizado!");
