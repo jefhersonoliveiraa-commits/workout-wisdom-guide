@@ -6,37 +6,40 @@
 
 @layer base {
   :root {
-    --background: 0 0% 5.1%;
-    --foreground: 0 0% 94.1%;
+    --background: 240 10% 4%;
+    --foreground: 240 5% 94%;
 
-    --card: 0 0% 8.6%;
-    --card-foreground: 0 0% 94.1%;
+    --card: 240 10% 6.5%;
+    --card-foreground: 240 5% 94%;
 
-    --popover: 0 0% 8.6%;
-    --popover-foreground: 0 0% 94.1%;
+    --popover: 240 10% 6.5%;
+    --popover-foreground: 240 5% 94%;
 
-    --primary: 79 88% 62%;
-    --primary-foreground: 0 0% 5.1%;
+    --primary: 270 80% 68%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 11.8%;
-    --secondary-foreground: 0 0% 94.1%;
+    --secondary: 240 10% 10%;
+    --secondary-foreground: 240 5% 94%;
 
-    --muted: 0 0% 14.5%;
-    --muted-foreground: 0 0% 40%;
+    --muted: 240 10% 9%;
+    --muted-foreground: 240 5% 45%;
 
-    --accent: 0 0% 14.5%;
-    --accent-foreground: 0 0% 94.1%;
+    --accent: 240 10% 11%;
+    --accent-foreground: 240 5% 94%;
 
-    --destructive: 0 100% 71.4%;
-    --destructive-foreground: 0 0% 5.1%;
+    --destructive: 0 100% 71%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 100% / 0.08;
-    --border-bright: 0 0% 100% / 0.14;
-    --input: 0 0% 100% / 0.08;
-    --ring: 79 88% 62%;
+    --border: 240 10% 100% / 0.08;
+    --border-bright: 240 10% 100% / 0.14;
+    --input: 240 10% 100% / 0.08;
+    --ring: 270 80% 68%;
 
     --radius: 14px;
     --radius-sm: 8px;
+
+    /* Lime accent — secondary highlight (completion, records, checks) */
+    --lime: 79 88% 62%;
 
     /* Workout-specific colors */
     --workout-blue: 217 91% 66%;
@@ -46,9 +49,9 @@
     --workout-red: 0 100% 71%;
     --workout-yellow: 42 100% 70%;
 
-    --bg2: 0 0% 8.6%;
-    --bg3: 0 0% 11.8%;
-    --bg4: 0 0% 14.5%;
+    --bg2: 240 10% 6.5%;
+    --bg3: 240 10% 9.5%;
+    --bg4: 240 10% 12%;
 
     --safe-bottom: env(safe-area-inset-bottom, 0px);
   }
@@ -79,4 +82,13 @@
 }
 .scrollbar-none::-webkit-scrollbar {
   display: none;
+}
+
+@keyframes progress-pulse {
+  0%, 100% { box-shadow: 0 0 6px hsl(var(--lime) / 0.3); }
+  50%       { box-shadow: 0 0 14px hsl(var(--lime) / 0.7); }
+}
+
+.animate-progress-pulse {
+  animation: progress-pulse 2s ease-in-out infinite;
 }

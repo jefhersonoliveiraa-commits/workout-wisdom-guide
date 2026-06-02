@@ -58,6 +58,7 @@ export default {
           red: "hsl(var(--workout-red))",
           yellow: "hsl(var(--workout-yellow))",
         },
+        lime: "hsl(var(--lime))",
         bg2: "hsl(var(--bg2))",
         bg3: "hsl(var(--bg3))",
         bg4: "hsl(var(--bg4))",
