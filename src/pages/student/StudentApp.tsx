@@ -77,7 +77,7 @@ export default function StudentApp() {
   }, [timer, day, exercises, workout, user?.id, plan?.id]);
 
   const handleDismissWeighIn = () => {
-    dismissWeighInPrompt();
+    dismissWeighInPrompt(user?.id);
     setShowWeighIn(false);
   };
 
