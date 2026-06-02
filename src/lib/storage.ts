@@ -64,7 +64,7 @@ export async function saveSet(
     exercise_id: exerciseId,
     plan_id: planId ?? null,
     log_date: date,
-    sets_data: setsData as unknown as any,
+    sets_data: setsData as unknown as never,
   });
 }
 
@@ -90,7 +90,7 @@ export async function saveObservation(
       student_id: studentId,
       exercise_id: exerciseId,
       log_date: date,
-      sets_data: [] as unknown as any,
+      sets_data: [] as unknown as never,
       observation,
     });
   }
