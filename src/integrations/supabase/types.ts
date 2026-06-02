@@ -321,6 +321,14 @@ export type Database = {
       day_plan_id: { Args: { _day_id: string }; Returns: string }
       is_plan_student: { Args: { _plan_id: string }; Returns: boolean }
       is_plan_trainer: { Args: { _plan_id: string }; Returns: boolean }
+      search_students_for_linking: {
+        Args: { search_name: string }
+        Returns: {
+          already_has_trainer: boolean
+          full_name: string
+          id: string
+        }[]
+      }
     }
     Enums: {
       app_role: "trainer" | "student"
