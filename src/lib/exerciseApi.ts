@@ -52,19 +52,21 @@ export async function searchExercises(term: string): Promise<ExerciseSuggestion[
     if (sl.includes('pulley') || sl.includes('pulldown')) searchEn = 'pulldown';
     if (sl.includes('leg press')) searchEn = 'leg press';
 
+    const { supabase } = await import('@/integrations/supabase/client');
+    const { data: { session } } = await supabase.auth.getSession();
     const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
     const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-    const res = await fetch(
+    const res = session ? await fetch(
       `https://${projectId}.supabase.co/functions/v1/search-exercises?q=${encodeURIComponent(searchEn)}`,
       {
         headers: {
-          'Authorization': `Bearer ${anonKey}`,
+          'Authorization': `Bearer ${session.access_token}`,
           'apikey': anonKey,
         },
       }
-    );
+    ) : null;
 
-    if (res.ok) {
+    if (res && res.ok) {
       const payload = await res.json();
       const exercises = Array.isArray(payload?.exercises) ? payload.exercises : [];
 
