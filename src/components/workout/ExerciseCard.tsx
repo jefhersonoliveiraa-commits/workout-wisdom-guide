@@ -185,6 +185,20 @@ export function ExerciseCard({
         >
           {allDone && <span className="text-[12px] text-primary-foreground font-bold">✓</span>}
         </button>
+        {(() => {
+          const c = muscleColor(exercise.muscle);
+          return (
+            <div
+              className="w-9 h-9 rounded-[10px] flex items-center justify-center flex-shrink-0"
+              style={{
+                backgroundColor: `hsl(var(--${c}) / 0.15)`,
+                color: `hsl(var(--${c}))`,
+              }}
+            >
+              <Dumbbell size={18} />
+            </div>
+          );
+        })()}
         <div className="flex-1 min-w-0">
           <div className="text-[14px] font-medium text-foreground leading-tight">{exercise.name}</div>
           <div className="text-[11px] text-muted-foreground mt-[2px]">{exercise.muscle}</div>
