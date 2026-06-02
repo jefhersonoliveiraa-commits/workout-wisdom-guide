@@ -90,7 +90,7 @@ export async function saveObservation(
       student_id: studentId,
       exercise_id: exerciseId,
       log_date: date,
-      sets_data: [] as unknown as any,
+      sets_data: [] as unknown as never,
       observation,
     });
   }
