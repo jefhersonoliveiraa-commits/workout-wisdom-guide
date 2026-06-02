@@ -36,6 +36,20 @@ interface SetInput {
   reps: string;
 }
 
+function muscleColor(muscle?: string | null): string {
+  const m = (muscle || "").toLowerCase();
+  if (/peito|chest|peit/.test(m)) return "workout-blue";
+  if (/cost|back|dorsal/.test(m)) return "workout-teal";
+  if (/ombro|shoulder|delto/.test(m)) return "workout-orange";
+  if (/tr[íi]ceps|tricep/.test(m)) return "workout-pink";
+  if (/b[íi]ceps|bra[çc]o|arm/.test(m)) return "workout-pink";
+  if (/perna|quad|leg|coxa/.test(m)) return "workout-yellow";
+  if (/gl[úu]teo|glute/.test(m)) return "workout-orange";
+  if (/core|abd[ôo]m|abs/.test(m)) return "workout-red";
+  if (/cardio/.test(m)) return "workout-blue";
+  return "primary";
+}
+
 function parseRest(rest: string): number {
   const lower = rest.toLowerCase();
   if (lower.includes("min")) {
