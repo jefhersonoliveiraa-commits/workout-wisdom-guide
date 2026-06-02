@@ -33,52 +33,72 @@ export function HeroCard({ day, progress }: HeroCardProps) {
       ];
 
   return (
-    <div className="bg-bg3 border border-border border-l-4 border-l-primary rounded-xl p-4 mb-4 overflow-hidden">
-      {day.dayLabel && (
-        <div className="text-[11px] text-muted-foreground mb-1 uppercase tracking-wider">
-          {day.dayLabel}
-        </div>
-      )}
-      <div className="text-[20px] font-bold text-foreground mb-[8px]">{day.title}</div>
-      <div className="flex flex-wrap gap-[6px] mb-3">
-        {day.tags.map((tag) => (
-          <span
-            key={tag}
-            className="text-[11px] px-[10px] py-[3px] rounded-full bg-bg4 text-muted-foreground"
-          >
-            {tag}
-          </span>
-        ))}
-      </div>
-      <div className="grid grid-cols-3 gap-2">
-        {stats.map((s, i) => {
-          const StatIcon = statIcons[i];
-          return (
-            <div key={i} className="bg-bg4 rounded-xl p-[10px] text-center">
-              <div className="flex justify-center mb-[4px]">
-                <StatIcon size={12} className="text-muted-foreground/50" />
-              </div>
-              <div className="text-[22px] font-bold text-primary font-mono leading-none">{s.val}</div>
-              <div className="text-[10px] text-muted-foreground mt-[4px]">{s.label}</div>
-            </div>
-          );
-        })}
-      </div>
-      {!day.isRest && (
-        <div className="mt-[12px]">
-          <div className="flex items-center gap-2">
-            <div className="flex-1 bg-bg4 rounded-full h-1.5 overflow-hidden">
-              <div
-                className="h-full bg-primary rounded-full transition-all duration-300"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-            <span className="text-[10px] text-muted-foreground font-mono flex-shrink-0 w-[30px] text-right">
-              {progress}%
-            </span>
+    <div
+      className="relative border border-border border-l-4 border-l-primary rounded-xl p-4 mb-4 overflow-hidden"
+      style={{
+        background: "linear-gradient(135deg, #1a0f35 0%, #0f1a2e 60%, #0a1a1a 100%)",
+      }}
+    >
+      {/* Decorative glows */}
+      <div
+        className="pointer-events-none absolute -top-16 -left-16 w-[180px] h-[180px] rounded-full"
+        style={{ background: "radial-gradient(circle, hsl(var(--primary) / 0.25), transparent 70%)" }}
+      />
+      <div
+        className="pointer-events-none absolute -bottom-10 -right-10 w-[120px] h-[120px] rounded-full"
+        style={{ background: "radial-gradient(circle, hsl(var(--lime) / 0.12), transparent 70%)" }}
+      />
+
+      <div className="relative">
+        {day.dayLabel && (
+          <div className="text-[11px] text-muted-foreground mb-1 uppercase tracking-wider">
+            {day.dayLabel}
           </div>
+        )}
+        <div className="text-[20px] font-bold text-foreground mb-[8px]">{day.title}</div>
+        <div className="flex flex-wrap gap-[6px] mb-3">
+          {day.tags.map((tag) => (
+            <span
+              key={tag}
+              className="text-[11px] px-[10px] py-[3px] rounded-full bg-bg4/70 text-muted-foreground"
+            >
+              {tag}
+            </span>
+          ))}
         </div>
-      )}
+        <div className="grid grid-cols-3 gap-2">
+          {stats.map((s, i) => {
+            const StatIcon = statIcons[i];
+            return (
+              <div key={i} className="bg-bg4/60 backdrop-blur-sm rounded-xl p-[10px] text-center">
+                <div className="flex justify-center mb-[4px]">
+                  <StatIcon size={12} className="text-muted-foreground/50" />
+                </div>
+                <div className="text-[22px] font-bold text-primary font-mono leading-none">{s.val}</div>
+                <div className="text-[10px] text-muted-foreground mt-[4px]">{s.label}</div>
+              </div>
+            );
+          })}
+        </div>
+        {!day.isRest && (
+          <div className="mt-[12px]">
+            <div className="flex items-center gap-2">
+              <div className="flex-1 bg-bg4 rounded-full h-1.5 overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all duration-300 ${progress < 100 ? "animate-progress-pulse" : ""}`}
+                  style={{
+                    width: `${progress}%`,
+                    background: "linear-gradient(90deg, hsl(var(--primary)), hsl(var(--lime)))",
+                  }}
+                />
+              </div>
+              <span className="text-[10px] text-muted-foreground font-mono flex-shrink-0 w-[30px] text-right">
+                {progress}%
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
