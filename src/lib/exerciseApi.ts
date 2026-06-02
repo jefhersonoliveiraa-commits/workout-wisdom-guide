@@ -52,13 +52,6 @@ export async function searchExercises(term: string): Promise<ExerciseSuggestion[
     if (sl.includes('pulley') || sl.includes('pulldown')) searchEn = 'pulldown';
     if (sl.includes('leg press')) searchEn = 'leg press';
 
-    const { data, error } = await supabase.functions.invoke('search-exercises', {
-      body: null,
-      method: 'GET',
-      headers: {},
-    });
-
-    // supabase.functions.invoke doesn't support query strings cleanly; use direct fetch with anon key
     const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
     const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
     const res = await fetch(
