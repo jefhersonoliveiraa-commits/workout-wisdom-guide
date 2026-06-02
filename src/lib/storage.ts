@@ -64,7 +64,7 @@ export async function saveSet(
     exercise_id: exerciseId,
     plan_id: planId ?? null,
     log_date: date,
-    sets_data: setsData as unknown as any,
+    sets_data: setsData as unknown as never,
   });
 }
 
