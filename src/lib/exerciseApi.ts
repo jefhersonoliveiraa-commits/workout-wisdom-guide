@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+
 
 export interface ExerciseSuggestion {
   id: string;
