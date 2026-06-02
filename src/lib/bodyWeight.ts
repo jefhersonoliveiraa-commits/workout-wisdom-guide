@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 export interface BodyWeightEntry { date: string; weight: number; bmi: number; }
-const DISMISSED_KEY = 'workout-body-weight-dismissed';
+const DISMISSED_KEY_PREFIX = 'workout-body-weight-dismissed';
+const dismissedKey = (studentId?: string) => studentId ? `${DISMISSED_KEY_PREFIX}:${studentId}` : DISMISSED_KEY_PREFIX;
 const CHECK_INTERVAL_DAYS = 14;
 
 export async function loadBodyWeightHistory(studentId: string): Promise<BodyWeightEntry[]> {
@@ -25,11 +26,11 @@ export async function getWeightChange(studentId: string): Promise<{ change: numb
   return { change, period: `desde ${new Date(data[1].log_date + 'T12:00:00').toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })}` };
 }
 export async function shouldPromptWeighIn(studentId: string): Promise<boolean> {
-  if (wasDismissedToday()) return false;
+  if (wasDismissedToday(studentId)) return false;
   const { data } = await supabase.from('body_weight_logs').select('log_date').eq('student_id', studentId).order('log_date', { ascending: false }).limit(1).maybeSingle();
   if (!data) return true;
   const diffDays = Math.floor((Date.now() - new Date(data.log_date + 'T12:00:00').getTime()) / (1000 * 60 * 60 * 24));
   return diffDays >= CHECK_INTERVAL_DAYS;
 }
-export function dismissWeighInPrompt() { sessionStorage.setItem(DISMISSED_KEY, new Date().toISOString().split('T')[0]); }
-export function wasDismissedToday(): boolean { return sessionStorage.getItem(DISMISSED_KEY) === new Date().toISOString().split('T')[0]; }
+export function dismissWeighInPrompt(studentId?: string) { sessionStorage.setItem(dismissedKey(studentId), new Date().toISOString().split('T')[0]); }
+export function wasDismissedToday(studentId?: string): boolean { return sessionStorage.getItem(dismissedKey(studentId)) === new Date().toISOString().split('T')[0]; }
