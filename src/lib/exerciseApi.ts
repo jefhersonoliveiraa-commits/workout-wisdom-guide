@@ -1,3 +1,5 @@
+import { supabase } from "@/integrations/supabase/client";
+
 export interface ExerciseSuggestion {
   id: string;
   name: string;
@@ -23,7 +25,7 @@ async function translateText(text: string, from: 'pt' | 'en', to: 'pt' | 'en'): 
       return data.responseData.translatedText;
     }
     return text;
-  } catch (error) {
+  } catch {
     return text;
   }
 }
@@ -31,11 +33,6 @@ async function translateText(text: string, from: 'pt' | 'en', to: 'pt' | 'en'): 
 export async function searchExercises(term: string): Promise<ExerciseSuggestion[]> {
   const q = term.trim();
   if (q.length < 2) return [];
-
-  const apiKey = import.meta.env.VITE_RAPIDAPI_KEY;
-  if (!apiKey || apiKey === 'sua_chave_aqui') {
-    return [{ id: `custom_${Date.now()}`, name: term, category: 'Personalizado (Sem API Key)', image: null }];
-  }
 
   const cacheKey = `exdb:${q.toLowerCase()}`;
   const cached = sessionStorage.getItem(cacheKey);
@@ -48,59 +45,60 @@ export async function searchExercises(term: string): Promise<ExerciseSuggestion[
   try {
     let searchEn = await translateText(q, 'pt', 'en');
     const sl = searchEn.toLowerCase();
-    
+
     if (sl.includes('supine')) searchEn = 'bench press';
     if (sl.includes('squat') || sl.includes('agachamento')) searchEn = 'squat';
     if (sl.includes('deadlift')) searchEn = 'deadlift';
     if (sl.includes('pulley') || sl.includes('pulldown')) searchEn = 'pulldown';
     if (sl.includes('leg press')) searchEn = 'leg press';
 
+    const { data, error } = await supabase.functions.invoke('search-exercises', {
+      body: null,
+      method: 'GET',
+      headers: {},
+    });
+
+    // supabase.functions.invoke doesn't support query strings cleanly; use direct fetch with anon key
+    const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+    const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
     const res = await fetch(
-      `https://exercisedb.p.rapidapi.com/exercises/name/${encodeURIComponent(searchEn)}`, 
+      `https://${projectId}.supabase.co/functions/v1/search-exercises?q=${encodeURIComponent(searchEn)}`,
       {
-        method: 'GET',
         headers: {
-          'X-RapidAPI-Key': apiKey,
-          'X-RapidAPI-Host': 'exercisedb.p.rapidapi.com'
-        }
+          'Authorization': `Bearer ${anonKey}`,
+          'apikey': anonKey,
+        },
       }
     );
 
     if (res.ok) {
-      const textData = await res.text();
-      let exercises = [];
-      try {
-        exercises = JSON.parse(textData);
-      } catch {
-        // Resposta da API em formato inesperado — segue com lista vazia.
-      }
+      const payload = await res.json();
+      const exercises = Array.isArray(payload?.exercises) ? payload.exercises : [];
 
-      if (Array.isArray(exercises) && exercises.length > 0) {
-        const limitedExercises = exercises.slice(0, 15);
-        
-        results = await Promise.all(limitedExercises.map(async (ex: any) => {
+      if (exercises.length > 0) {
+        results = await Promise.all(exercises.map(async (ex: any) => {
           const translatedName = await translateText(ex.name, 'en', 'pt');
           const targetMuscle = MUSCLES_PT[ex.target] || ex.target;
           return {
             id: ex.id,
             name: translatedName.charAt(0).toUpperCase() + translatedName.slice(1),
             category: targetMuscle,
-            image: ex.gifUrl || null
+            image: ex.gifUrl || null,
           };
         }));
       }
     }
-  } catch (error) {
-    console.error("Erro na busca de exercícios:", error);
+  } catch {
+    // Falha silenciosa — usuário ainda pode adicionar exercício personalizado.
   }
 
   const exactMatch = results.some(r => r.name.toLowerCase() === q.toLowerCase());
   if (!exactMatch) {
     results.push({
       id: `custom_${Date.now()}`,
-      name: term, 
+      name: term,
       category: 'Exercício Personalizado',
-      image: null
+      image: null,
     });
   }
 
