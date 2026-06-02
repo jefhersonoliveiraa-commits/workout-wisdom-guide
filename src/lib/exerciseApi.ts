@@ -66,7 +66,7 @@ export async function searchExercises(term: string): Promise<ExerciseSuggestion[
       }
     ) : null;
 
-    if (res.ok) {
+    if (res && res.ok) {
       const payload = await res.json();
       const exercises = Array.isArray(payload?.exercises) ? payload.exercises : [];
 
