@@ -237,7 +237,8 @@ export default function PlanBuilderPage() {
       if (isEdit && planId) {
         await supabase.from('workout_plans').update({ is_active: true }).eq('id', planId);
       }
-      toast.error('Erro ao salvar: ' + (err?.message ?? 'Tente novamente'));
+      if (import.meta.env.DEV) console.error('[PlanBuilder] save failed', err);
+      toast.error('Erro ao salvar. Tente novamente.');
     } finally {
       setSaving(false);
     }
