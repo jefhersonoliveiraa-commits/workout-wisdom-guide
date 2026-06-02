@@ -37,7 +37,7 @@ export default function StudentApp() {
     if (!user?.id) return;
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
     shouldPromptWeighIn(user.id).then(should => {
-      if (should && !wasDismissedToday()) {
+      if (should && !wasDismissedToday(user.id)) {
         timeoutId = setTimeout(() => setShowWeighIn(true), 2000);
       }
     });
