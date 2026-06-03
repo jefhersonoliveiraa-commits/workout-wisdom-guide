@@ -1,7 +1,5 @@
 import { useQueries, useQuery } from "@tanstack/react-query";
 import {
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   Tooltip,
