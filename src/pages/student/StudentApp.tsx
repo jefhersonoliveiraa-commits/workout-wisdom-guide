@@ -185,7 +185,7 @@ export default function StudentApp() {
         )}
 
         {currentPage === "historico" && <HistoryPage studentId={user!.id} />}
-        {currentPage === "evolucao" && <EvolutionPage studentId={user!.id} plan={plan} />}
+        {currentPage === "evolucao" && <EvolutionPage studentId={user!.id} plan={plan} onOpenWeighIn={() => setShowWeighIn(true)} />}
         {currentPage === "prog" && <ProgressionPage />}
         {currentPage === "perfil" && (
           <ProfilePage
