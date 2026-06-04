@@ -1,4 +1,5 @@
 import { Dumbbell, CalendarDays, TrendingUp, BarChart2, User } from "lucide-react";
+import { motion } from "framer-motion";
 
 interface BottomNavProps {
   currentPage: string;
@@ -23,16 +24,23 @@ export function BottomNav({ currentPage, onPageChange }: BottomNavProps) {
           <button
             key={item.id}
             onClick={() => onPageChange(item.id)}
-            className="flex-1 flex flex-col items-center py-[10px] pb-[12px] gap-[3px] bg-transparent border-none transition-colors duration-150"
+            className="flex-1 min-h-[52px] flex flex-col items-center justify-center py-[8px] pb-[10px] gap-[3px] bg-transparent border-none transition-colors duration-150"
           >
-            <div
-              className={`relative flex items-center justify-center w-[38px] h-[28px] rounded-full transition-all duration-200 ${
-                active ? "bg-primary/15" : ""
-              }`}
-            >
-              <span className={`transition-colors duration-150 ${active ? "text-primary" : "text-muted-foreground/60"}`}>
-                <Icon size={20} strokeWidth={active ? 2.2 : 1.8} />
-              </span>
+            <div className="relative flex items-center justify-center w-[44px] h-[28px]">
+              {active && (
+                <motion.div
+                  layoutId="bottomnav-pill"
+                  className="absolute inset-0 rounded-full bg-primary/15"
+                  transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                />
+              )}
+              <Icon
+                size={20}
+                strokeWidth={active ? 2.2 : 1.8}
+                className={`relative z-10 transition-colors duration-150 ${
+                  active ? "text-primary" : "text-muted-foreground/60"
+                }`}
+              />
             </div>
             <span
               className={`text-[9px] font-medium transition-colors duration-150 ${
