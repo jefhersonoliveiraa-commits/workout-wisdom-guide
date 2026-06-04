@@ -216,6 +216,7 @@ export function ExerciseCard({
         </button>
         {(() => {
           const c = muscleColor(exercise.muscle);
+          const MuscleIcon = muscleIcon(exercise.muscle);
           return (
             <div
               className="w-9 h-9 rounded-[10px] flex items-center justify-center flex-shrink-0"
@@ -224,7 +225,7 @@ export function ExerciseCard({
                 color: `hsl(var(--${c}))`,
               }}
             >
-              <Dumbbell size={18} />
+              <MuscleIcon size={18} />
             </div>
           );
         })()}
