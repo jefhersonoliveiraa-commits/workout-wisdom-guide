@@ -65,6 +65,20 @@ function muscleColor(muscle?: string | null): string {
   return "primary";
 }
 
+function muscleIcon(muscle?: string | null): LucideIcon {
+  const m = (muscle || "").toLowerCase();
+  if (/peito|chest|peit/.test(m)) return HeartPulse;
+  if (/cost|back|dorsal/.test(m)) return ChevronsUp;
+  if (/ombro|shoulder|delto/.test(m)) return Wind;
+  if (/tr[íi]ceps|tricep/.test(m)) return Dumbbell;
+  if (/b[íi]ceps|bra[çc]o|arm/.test(m)) return Dumbbell;
+  if (/perna|quad|leg|coxa/.test(m)) return Footprints;
+  if (/gl[úu]teo|glute/.test(m)) return PersonStanding;
+  if (/core|abd[ôo]m|abs/.test(m)) return Zap;
+  if (/cardio/.test(m)) return HeartPulse;
+  return Dumbbell;
+}
+
 function parseRest(rest: string): number {
   const lower = rest.toLowerCase();
   if (lower.includes("min")) {
