@@ -288,8 +288,8 @@ export function ExerciseCard({
 
               {exercise.technique && (
                 <div className="mt-3 bg-primary/[0.08] border border-primary/30 rounded-sm p-3">
-                  <div className="text-[10px] uppercase tracking-wider font-semibold text-primary mb-1">
-                    🔥 Técnica avançada
+                  <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-semibold text-lime mb-1">
+                    <Flame size={12} /> Técnica avançada
                   </div>
                   <div className="text-[12px] text-primary/90 leading-[1.6]">{exercise.technique}</div>
                 </div>
