@@ -212,7 +212,7 @@ export function ExerciseCard({
               : "border-border-bright bg-transparent"
           }`}
         >
-          {allDone && <span className="text-[12px] text-primary-foreground font-bold">✓</span>}
+          {allDone && <Check size={14} strokeWidth={3} className="text-primary-foreground" />}
         </button>
         {(() => {
           const c = muscleColor(exercise.muscle);
