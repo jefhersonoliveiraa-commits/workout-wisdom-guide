@@ -244,9 +244,10 @@ export function ExerciseCard({
             sug. {exercise.suggested_load}kg
           </span>
         ) : null}
-        <div className={`text-muted-foreground text-[16px] flex-shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}>
-          ▾
-        </div>
+        <ChevronDown
+          size={16}
+          className={`text-muted-foreground flex-shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+        />
       </div>
 
       <div className="flex gap-[6px] flex-wrap px-[14px] pb-[10px] pl-[48px]">
