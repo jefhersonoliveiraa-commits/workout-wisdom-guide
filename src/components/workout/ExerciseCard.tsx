@@ -254,8 +254,8 @@ export function ExerciseCard({
         <span className="text-[11px] font-mono bg-bg4 border border-border rounded-[6px] px-2 py-[3px] text-muted-foreground">
           {exercise.sets} × {exercise.reps}
         </span>
-        <span className="text-[11px] font-mono bg-bg4 border border-border rounded-[6px] px-2 py-[3px] text-muted-foreground">
-          ⏱ {exercise.rest}
+        <span className="inline-flex items-center gap-1 text-[11px] font-mono bg-bg4 border border-border rounded-[6px] px-2 py-[3px] text-muted-foreground">
+          <Clock size={12} /> {exercise.rest}
         </span>
         {exercise.rir && (
           <span className="text-[11px] font-mono bg-bg4 border border-border rounded-[6px] px-2 py-[3px] text-muted-foreground">
