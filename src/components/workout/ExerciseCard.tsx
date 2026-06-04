@@ -1,6 +1,21 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Dumbbell } from "lucide-react";
+import {
+  Dumbbell,
+  HeartPulse,
+  ChevronsUp,
+  Wind,
+  Footprints,
+  PersonStanding,
+  Zap,
+  Clock,
+  Flame,
+  ChevronDown,
+  Play,
+  Check,
+  Circle,
+  type LucideIcon,
+} from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getTodaySession, getLastSession, saveSet, saveObservation, type SetLog } from "@/lib/storage";
 import { youtubeSearchUrl } from "@/lib/exerciseApi";
