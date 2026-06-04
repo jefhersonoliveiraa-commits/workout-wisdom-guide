@@ -301,7 +301,7 @@ export function ExerciseCard({
                 rel="noopener noreferrer"
                 className="mt-3 flex items-center justify-center gap-2 w-full rounded-[6px] border border-border bg-bg4 px-3 py-2 text-[12px] font-medium text-muted-foreground hover:text-primary hover:border-primary transition-colors"
               >
-                <span className="text-[14px]">▶</span>
+                <Play size={14} fill="currentColor" />
                 Ver vídeo demonstrativo
               </a>
 
