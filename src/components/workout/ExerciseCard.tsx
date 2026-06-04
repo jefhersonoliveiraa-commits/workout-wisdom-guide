@@ -1,6 +1,21 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Dumbbell } from "lucide-react";
+import {
+  Dumbbell,
+  HeartPulse,
+  ChevronsUp,
+  Wind,
+  Footprints,
+  PersonStanding,
+  Zap,
+  Clock,
+  Flame,
+  ChevronDown,
+  Play,
+  Check,
+  Circle,
+  type LucideIcon,
+} from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getTodaySession, getLastSession, saveSet, saveObservation, type SetLog } from "@/lib/storage";
 import { youtubeSearchUrl } from "@/lib/exerciseApi";
@@ -48,6 +63,20 @@ function muscleColor(muscle?: string | null): string {
   if (/core|abd[ôo]m|abs/.test(m)) return "workout-red";
   if (/cardio/.test(m)) return "workout-blue";
   return "primary";
+}
+
+function muscleIcon(muscle?: string | null): LucideIcon {
+  const m = (muscle || "").toLowerCase();
+  if (/peito|chest|peit/.test(m)) return HeartPulse;
+  if (/cost|back|dorsal/.test(m)) return ChevronsUp;
+  if (/ombro|shoulder|delto/.test(m)) return Wind;
+  if (/tr[íi]ceps|tricep/.test(m)) return Dumbbell;
+  if (/b[íi]ceps|bra[çc]o|arm/.test(m)) return Dumbbell;
+  if (/perna|quad|leg|coxa/.test(m)) return Footprints;
+  if (/gl[úu]teo|glute/.test(m)) return PersonStanding;
+  if (/core|abd[ôo]m|abs/.test(m)) return Zap;
+  if (/cardio/.test(m)) return HeartPulse;
+  return Dumbbell;
 }
 
 function parseRest(rest: string): number {
@@ -183,10 +212,11 @@ export function ExerciseCard({
               : "border-border-bright bg-transparent"
           }`}
         >
-          {allDone && <span className="text-[12px] text-primary-foreground font-bold">✓</span>}
+          {allDone && <Check size={14} strokeWidth={3} className="text-primary-foreground" />}
         </button>
         {(() => {
           const c = muscleColor(exercise.muscle);
+          const MuscleIcon = muscleIcon(exercise.muscle);
           return (
             <div
               className="w-9 h-9 rounded-[10px] flex items-center justify-center flex-shrink-0"
@@ -195,7 +225,7 @@ export function ExerciseCard({
                 color: `hsl(var(--${c}))`,
               }}
             >
-              <Dumbbell size={18} />
+              <MuscleIcon size={18} />
             </div>
           );
         })()}
@@ -214,17 +244,18 @@ export function ExerciseCard({
             sug. {exercise.suggested_load}kg
           </span>
         ) : null}
-        <div className={`text-muted-foreground text-[16px] flex-shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}>
-          ▾
-        </div>
+        <ChevronDown
+          size={16}
+          className={`text-muted-foreground flex-shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+        />
       </div>
 
       <div className="flex gap-[6px] flex-wrap px-[14px] pb-[10px] pl-[48px]">
         <span className="text-[11px] font-mono bg-bg4 border border-border rounded-[6px] px-2 py-[3px] text-muted-foreground">
           {exercise.sets} × {exercise.reps}
         </span>
-        <span className="text-[11px] font-mono bg-bg4 border border-border rounded-[6px] px-2 py-[3px] text-muted-foreground">
-          ⏱ {exercise.rest}
+        <span className="inline-flex items-center gap-1 text-[11px] font-mono bg-bg4 border border-border rounded-[6px] px-2 py-[3px] text-muted-foreground">
+          <Clock size={12} /> {exercise.rest}
         </span>
         {exercise.rir && (
           <span className="text-[11px] font-mono bg-bg4 border border-border rounded-[6px] px-2 py-[3px] text-muted-foreground">
@@ -257,8 +288,8 @@ export function ExerciseCard({
 
               {exercise.technique && (
                 <div className="mt-3 bg-primary/[0.08] border border-primary/30 rounded-sm p-3">
-                  <div className="text-[10px] uppercase tracking-wider font-semibold text-primary mb-1">
-                    🔥 Técnica avançada
+                  <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-semibold text-lime mb-1">
+                    <Flame size={12} /> Técnica avançada
                   </div>
                   <div className="text-[12px] text-primary/90 leading-[1.6]">{exercise.technique}</div>
                 </div>
@@ -270,7 +301,7 @@ export function ExerciseCard({
                 rel="noopener noreferrer"
                 className="mt-3 flex items-center justify-center gap-2 w-full rounded-[6px] border border-border bg-bg4 px-3 py-2 text-[12px] font-medium text-muted-foreground hover:text-primary hover:border-primary transition-colors"
               >
-                <span className="text-[14px]">▶</span>
+                <Play size={14} fill="currentColor" />
                 Ver vídeo demonstrativo
               </a>
 
@@ -313,13 +344,13 @@ export function ExerciseCard({
                       />
                       <button
                         onClick={() => handleSetClick(idx, done)}
-                        className={`w-full h-8 rounded-[6px] text-[12px] font-bold transition-all ${
+                        className={`w-full h-8 rounded-[6px] flex items-center justify-center transition-all ${
                           done
-                            ? "bg-primary text-primary-foreground"
+                            ? "bg-lime text-background"
                             : "bg-bg3 border border-border-bright text-muted-foreground hover:border-primary hover:text-primary"
                         }`}
                       >
-                        {done ? "✓" : "•"}
+                        {done ? <Check size={14} strokeWidth={3} /> : <Circle size={10} fill="currentColor" />}
                       </button>
                     </div>
                   );
