@@ -84,6 +84,35 @@ export default function StudentApp() {
     setShowWeighIn(false);
   };
 
+  // Celebration — fire once per day when day reaches 100%
+  useEffect(() => {
+    if (progress !== 100 || !user?.id || !day || day.is_rest) return;
+    const flagKey = `workout-celebrated:${user.id}:${day.day_index}:${new Date().toDateString()}`;
+    if (localStorage.getItem(flagKey)) return;
+    localStorage.setItem(flagKey, "1");
+    setCelebrating(true);
+    try { navigator.vibrate?.([100, 50, 100]); } catch {}
+    const t = setTimeout(() => setCelebrating(false), 2800);
+    return () => clearTimeout(t);
+  }, [progress, user?.id, day]);
+
+  // Memoize adapted days with today/completed flags
+  const adaptedDays = useMemo(() => trainingDays.map(d => ({
+    dayIndex: d.day_index,
+    shortLabel: d.short_label,
+    isRest: d.is_rest,
+    title: d.title,
+    colorClass: d.color_class as any,
+    tags: d.tags ?? [],
+    exercises: d.exercises,
+    totalExercises: d.exercises.length,
+    totalSets: d.exercises.reduce((s, e) => s + e.sets, 0),
+    estimatedTime: d.estimated_time ?? "—",
+    isToday: d.day_index === todayDayIndex,
+    isCompleted: !d.is_rest && d.exercises.length > 0 &&
+      workout.getDayProgress(d.day_index, d.exercises.map(e => ({ id: e.id, sets: e.sets }))) === 100,
+  })), [trainingDays, todayDayIndex, workout]);
+
   if (planLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-3">
