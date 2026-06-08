@@ -87,9 +87,9 @@ function BodyWeightSection({ studentId, onOpenWeighIn }: { studentId: string; on
       ) : (
         <>
           <div className="flex items-baseline gap-3 mb-3">
-            <div className="text-[34px] font-mono font-semibold text-foreground leading-none">
+            <div className="text-stat font-mono text-foreground leading-none">
               {latest?.weight ?? recent[recent.length - 1].weight}
-              <span className="text-[14px] text-muted-foreground ml-1">kg</span>
+              <span className="text-[14px] text-muted-foreground ml-1 font-sans font-normal">kg</span>
             </div>
             {change && (
               <div
