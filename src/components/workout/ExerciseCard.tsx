@@ -206,13 +206,18 @@ export function ExerciseCard({
       >
         <button
           onClick={(e) => { e.stopPropagation(); onToggleAll(); }}
-          className={`w-[22px] h-[22px] rounded-full border-[1.5px] flex-shrink-0 flex items-center justify-center transition-all duration-200 ${
-            allDone
-              ? "bg-primary border-primary"
-              : "border-border-bright bg-transparent"
-          }`}
+          aria-label="Marcar todas as séries"
+          className="w-11 h-11 -m-2 flex-shrink-0 flex items-center justify-center"
         >
-          {allDone && <Check size={14} strokeWidth={3} className="text-primary-foreground" />}
+          <span
+            className={`w-[22px] h-[22px] rounded-full border-[1.5px] flex items-center justify-center transition-all duration-200 ${
+              allDone
+                ? "bg-primary border-primary"
+                : "border-border-bright bg-transparent"
+            }`}
+          >
+            {allDone && <Check size={14} strokeWidth={3} className="text-primary-foreground" />}
+          </span>
         </button>
         {(() => {
           const c = muscleColor(exercise.muscle);
@@ -344,13 +349,14 @@ export function ExerciseCard({
                       />
                       <button
                         onClick={() => handleSetClick(idx, done)}
-                        className={`w-full h-8 rounded-[6px] flex items-center justify-center transition-all ${
+                        aria-label={done ? "Desmarcar série" : "Marcar série concluída"}
+                        className={`w-full h-11 rounded-[6px] flex items-center justify-center transition-all ${
                           done
                             ? "bg-lime text-background"
                             : "bg-bg3 border border-border-bright text-muted-foreground hover:border-primary hover:text-primary"
                         }`}
                       >
-                        {done ? <Check size={14} strokeWidth={3} /> : <Circle size={10} fill="currentColor" />}
+                        {done ? <Check size={16} strokeWidth={3} /> : <Circle size={10} fill="currentColor" />}
                       </button>
                     </div>
                   );

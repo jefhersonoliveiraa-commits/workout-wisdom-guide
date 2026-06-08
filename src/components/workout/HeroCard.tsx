@@ -18,25 +18,27 @@ interface HeroCardProps {
 }
 
 export function HeroCard({ day, progress }: HeroCardProps) {
-  const statIcons = [Zap, Layers, Clock];
+  // Hierarchy: 1 primary stat (text-stat) + 2 secondary stats (text-base)
+  const primaryStat = day.isRest
+    ? { val: day.estimatedTime, label: day.dayIndex === 5 ? "min cardio" : "descanso", Icon: Clock }
+    : { val: String(day.totalExercises), label: "exercícios", Icon: Zap };
 
-  const stats = day.isRest
+  const secondaryStats = day.isRest
     ? [
-        { val: day.estimatedTime, label: day.dayIndex === 5 ? "min cardio" : "treino" },
-        { val: day.dayIndex === 5 ? "leve" : "0", label: day.dayIndex === 5 ? "intensidade" : "treino" },
-        { val: day.dayIndex === 5 ? "0" : "✓", label: day.dayIndex === 5 ? "musculação" : "nutrição" },
+        { val: day.dayIndex === 5 ? "leve" : "0", label: day.dayIndex === 5 ? "intensidade" : "treino", Icon: Layers },
+        { val: day.dayIndex === 5 ? "0" : "✓", label: day.dayIndex === 5 ? "musculação" : "nutrição", Icon: Clock },
       ]
     : [
-        { val: String(day.totalExercises), label: "exercícios" },
-        { val: String(day.totalSets), label: "séries totais" },
-        { val: day.estimatedTime, label: "min estimado" },
+        { val: String(day.totalSets), label: "séries", Icon: Layers },
+        { val: day.estimatedTime, label: "min", Icon: Clock },
       ];
 
   return (
     <div
       className="relative border border-border border-l-4 border-l-primary rounded-xl p-4 mb-4 overflow-hidden"
       style={{
-        background: "linear-gradient(135deg, #1a0f35 0%, #0f1a2e 60%, #0a1a1a 100%)",
+        background:
+          "linear-gradient(135deg, hsl(270 80% 8%) 0%, hsl(240 10% 8%) 60%, hsl(174 20% 6%) 100%)",
       }}
     >
       {/* Decorative glows */}
@@ -60,25 +62,35 @@ export function HeroCard({ day, progress }: HeroCardProps) {
           {day.tags.map((tag) => (
             <span
               key={tag}
-              className="text-[11px] px-[10px] py-[3px] rounded-full bg-bg4/70 text-muted-foreground"
+              className="text-[11px] px-[10px] py-[3px] rounded-full text-foreground/90"
+              style={{
+                background: "hsl(var(--primary) / 0.18)",
+                border: "1px solid hsl(var(--primary) / 0.35)",
+              }}
             >
               {tag}
             </span>
           ))}
         </div>
-        <div className="grid grid-cols-3 gap-2">
-          {stats.map((s, i) => {
-            const StatIcon = statIcons[i];
-            return (
-              <div key={i} className="bg-bg4/60 backdrop-blur-sm rounded-xl p-[10px] text-center">
-                <div className="flex justify-center mb-[4px]">
-                  <StatIcon size={12} className="text-muted-foreground/50" />
-                </div>
-                <div className="text-[22px] font-bold text-primary font-mono leading-none">{s.val}</div>
-                <div className="text-[10px] text-muted-foreground mt-[4px]">{s.label}</div>
+        <div className="grid grid-cols-[1.4fr_1fr_1fr] gap-2">
+          {/* Primary stat */}
+          <div className="bg-bg4/60 backdrop-blur-sm rounded-xl p-[12px]">
+            <div className="flex items-center gap-1 mb-[4px]">
+              <primaryStat.Icon size={12} className="text-muted-foreground/60" />
+              <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{primaryStat.label}</span>
+            </div>
+            <div className="text-stat text-primary font-mono">{primaryStat.val}</div>
+          </div>
+          {/* Secondary stats */}
+          {secondaryStats.map((s, i) => (
+            <div key={i} className="bg-bg4/60 backdrop-blur-sm rounded-xl p-[10px] text-center">
+              <div className="flex justify-center mb-[4px]">
+                <s.Icon size={11} className="text-muted-foreground/50" />
               </div>
-            );
-          })}
+              <div className="text-[16px] font-semibold text-foreground font-mono leading-none">{s.val}</div>
+              <div className="text-[10px] text-muted-foreground mt-[4px]">{s.label}</div>
+            </div>
+          ))}
         </div>
         {!day.isRest && (
           <div className="mt-[12px]">
