@@ -15,6 +15,11 @@ export default {
         sans: ["DM Sans", "sans-serif"],
         mono: ["DM Mono", "monospace"],
       },
+      fontSize: {
+        display: ["48px", { lineHeight: "1.05", letterSpacing: "-0.02em", fontWeight: "700" }],
+        stat: ["32px", { lineHeight: "1.1", fontWeight: "700" }],
+        "stat-sm": ["24px", { lineHeight: "1.15", fontWeight: "600" }],
+      },
       colors: {
         border: "hsl(var(--border))",
         "border-bright": "hsl(var(--border-bright))",
