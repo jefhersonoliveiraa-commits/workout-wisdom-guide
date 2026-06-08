@@ -286,12 +286,12 @@ function PersonalRecordsSection({ studentId, exercises }: { studentId: string; e
                 </div>
               </div>
               <div
-                className={`font-mono text-[15px] font-semibold ${
+                className={`font-mono ${
                   r.isRecent ? "text-[hsl(var(--lime))]" : "text-foreground"
-                }`}
+                } ${records[0]?.id === r.id ? "text-stat-sm" : "text-[15px] font-semibold"}`}
               >
                 {r.weight}
-                <span className="text-[11px] text-muted-foreground ml-0.5">kg</span>
+                <span className="text-[11px] text-muted-foreground ml-0.5 font-sans font-normal">kg</span>
               </div>
             </li>
           ))}
