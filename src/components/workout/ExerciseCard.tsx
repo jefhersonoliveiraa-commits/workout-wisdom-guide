@@ -310,53 +310,63 @@ export function ExerciseCard({
                 Ver vídeo demonstrativo
               </a>
 
-              <div className="grid grid-cols-[44px_1fr_1fr_44px] gap-2 mt-4 px-1">
-                <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Sér.</div>
-                <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Carga (kg)</div>
-                <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Reps</div>
-                <div></div>
-              </div>
-
-              <div className="space-y-2 mt-2">
+              <div className="space-y-2 mt-4">
                 {sets.map((done, idx) => {
+                  const isNext = !done && sets.slice(0, idx).every(Boolean) && !sets[idx];
+                  const repsPh = lastSession?.sets[idx]?.reps ? String(lastSession.sets[idx].reps) : "0";
                   return (
                     <div
                       key={idx}
-                      className={`grid grid-cols-[44px_1fr_1fr_44px] gap-2 items-center bg-bg4 border rounded-sm p-2 transition-colors ${
-                        done ? "border-primary/40 bg-primary/[0.06]" : "border-border"
+                      className={`flex items-center gap-3 border rounded-[10px] px-3 py-2 transition-colors ${
+                        done
+                          ? "bg-lime/5 border-lime/20"
+                          : isNext
+                            ? "bg-primary/[0.08] border-primary/30"
+                            : "bg-bg4 border-border"
                       }`}
                     >
-                      <div className={`text-center text-[14px] font-mono font-semibold ${done ? "text-primary" : "text-muted-foreground"}`}>
-                        {idx + 1}
-                      </div>
-                      <input
-                        type="number"
-                        inputMode="decimal"
-                        value={inputs[idx]?.weight || ""}
-                        onChange={(e) => updateInput(idx, "weight", e.target.value)}
-                        onBlur={() => persistSet(idx)}
-                        placeholder={suggestedPlaceholder(idx)}
-                        className="w-full bg-bg3 border border-border rounded-[6px] px-2 py-1 text-[14px] font-mono text-foreground text-center outline-none focus:border-primary transition-colors"
-                      />
-                      <input
-                        type="number"
-                        inputMode="numeric"
-                        value={inputs[idx]?.reps || ""}
-                        onChange={(e) => updateInput(idx, "reps", e.target.value)}
-                        onBlur={() => persistSet(idx)}
-                        placeholder={lastSession?.sets[idx]?.reps ? String(lastSession.sets[idx].reps) : "0"}
-                        className="w-full bg-bg3 border border-border rounded-[6px] px-2 py-1 text-[14px] font-mono text-foreground text-center outline-none focus:border-primary transition-colors"
-                      />
+                      <span className={`text-[11px] font-mono font-semibold w-7 flex-shrink-0 ${done ? "text-lime" : "text-muted-foreground"}`}>
+                        S{idx + 1}
+                      </span>
+
+                      <label className="flex-1 min-w-0 flex items-baseline gap-1 cursor-text">
+                        <input
+                          type="number"
+                          inputMode="decimal"
+                          value={inputs[idx]?.weight || ""}
+                          onChange={(e) => updateInput(idx, "weight", e.target.value)}
+                          onBlur={() => persistSet(idx)}
+                          placeholder={suggestedPlaceholder(idx)}
+                          className={`min-w-0 flex-1 bg-transparent border-0 outline-none text-stat font-mono text-right tabular-nums p-0 placeholder:text-muted-foreground/30 ${
+                            done ? "text-lime" : "text-foreground"
+                          }`}
+                        />
+                        <span className="text-[12px] font-mono text-muted-foreground flex-shrink-0">kg</span>
+                      </label>
+
+                      <label className="flex items-baseline gap-1 cursor-text flex-shrink-0">
+                        <span className="text-[14px] font-mono text-muted-foreground">×</span>
+                        <input
+                          type="number"
+                          inputMode="numeric"
+                          value={inputs[idx]?.reps || ""}
+                          onChange={(e) => updateInput(idx, "reps", e.target.value)}
+                          onBlur={() => persistSet(idx)}
+                          placeholder={repsPh}
+                          className="w-10 bg-transparent border-0 outline-none text-[18px] font-mono font-semibold text-foreground text-center tabular-nums p-0 placeholder:text-muted-foreground/30"
+                        />
+                      </label>
+
                       <button
                         onClick={() => handleSetClick(idx, done)}
                         aria-label={done ? "Desmarcar série" : "Marcar série concluída"}
-                        className={`w-full h-11 rounded-[6px] flex items-center justify-center transition-all ${
+                        className={`w-11 h-11 rounded-[10px] flex items-center justify-center flex-shrink-0 transition-all ${
                           done
                             ? "bg-lime text-background"
                             : "bg-bg3 border border-border-bright text-muted-foreground hover:border-primary hover:text-primary"
                         }`}
                       >
-                        {done ? <Check size={16} strokeWidth={3} /> : <Circle size={10} fill="currentColor" />}
+                        {done ? <Check size={18} strokeWidth={3} /> : <Circle size={10} fill="currentColor" />}
                       </button>
                     </div>
                   );
