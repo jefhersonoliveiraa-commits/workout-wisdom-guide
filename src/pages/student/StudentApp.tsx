@@ -33,6 +33,8 @@ export default function StudentApp() {
   const workout = useWorkoutState(user!.id);
   const timer = useRestTimer();
   const [showWeighIn, setShowWeighIn] = useState(false);
+  const [celebrating, setCelebrating] = useState(false);
+  const todayDayIndex = getTodayDayIndex();
 
   useEffect(() => {
     if (!user?.id) return;
