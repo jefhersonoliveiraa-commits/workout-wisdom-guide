@@ -349,13 +349,14 @@ export function ExerciseCard({
                       />
                       <button
                         onClick={() => handleSetClick(idx, done)}
-                        className={`w-full h-8 rounded-[6px] flex items-center justify-center transition-all ${
+                        aria-label={done ? "Desmarcar série" : "Marcar série concluída"}
+                        className={`w-full h-11 rounded-[6px] flex items-center justify-center transition-all ${
                           done
                             ? "bg-lime text-background"
                             : "bg-bg3 border border-border-bright text-muted-foreground hover:border-primary hover:text-primary"
                         }`}
                       >
-                        {done ? <Check size={14} strokeWidth={3} /> : <Circle size={10} fill="currentColor" />}
+                        {done ? <Check size={16} strokeWidth={3} /> : <Circle size={10} fill="currentColor" />}
                       </button>
                     </div>
                   );
