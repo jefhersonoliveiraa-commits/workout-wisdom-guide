@@ -137,20 +137,6 @@ export default function StudentApp() {
     );
   }
 
-  // Adapt DbTrainingDay to the shape HeroCard and DayNav expect
-  const adaptedDays = trainingDays.map(d => ({
-    dayIndex: d.day_index,
-    shortLabel: d.short_label,
-    isRest: d.is_rest,
-    title: d.title,
-    colorClass: d.color_class as any,
-    tags: d.tags ?? [],
-    exercises: d.exercises,
-    totalExercises: d.exercises.length,
-    totalSets: d.exercises.reduce((s, e) => s + e.sets, 0),
-    estimatedTime: d.estimated_time ?? "—",
-  }));
-
   const adaptedDay = adaptedDays[currentDay];
 
   return (
