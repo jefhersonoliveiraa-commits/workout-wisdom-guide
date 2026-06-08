@@ -231,6 +231,63 @@ export default function StudentApp() {
         onClose={() => setShowWeighIn(false)}
         onDismiss={handleDismissWeighIn}
       />
+
+      {/* Celebration overlay — fires once per day on 100% */}
+      <AnimatePresence>
+        {celebrating && (
+          <motion.div
+            className="fixed inset-0 z-[60] pointer-events-none flex items-start justify-center pt-24"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            {/* Particles */}
+            {Array.from({ length: 36 }).map((_, i) => {
+              const isLime = i % 2 === 0;
+              const left = Math.random() * 100;
+              const delay = Math.random() * 0.4;
+              const duration = 1.8 + Math.random() * 0.9;
+              const size = 6 + Math.random() * 6;
+              const rotate = Math.random() * 360;
+              return (
+                <motion.span
+                  key={i}
+                  className="absolute top-0 rounded-sm"
+                  style={{
+                    left: `${left}%`,
+                    width: size,
+                    height: size,
+                    background: isLime ? "hsl(var(--lime))" : "hsl(var(--primary))",
+                    boxShadow: isLime
+                      ? "0 0 8px hsl(var(--lime) / 0.7)"
+                      : "0 0 8px hsl(var(--primary) / 0.7)",
+                  }}
+                  initial={{ y: -40, opacity: 0, rotate: 0 }}
+                  animate={{ y: "110vh", opacity: [0, 1, 1, 0], rotate }}
+                  transition={{ duration, delay, ease: "easeIn" }}
+                />
+              );
+            })}
+
+            {/* Card de parabéns */}
+            <motion.div
+              initial={{ scale: 0.7, opacity: 0, y: -10 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 18 }}
+              className="relative px-6 py-4 rounded-2xl border border-primary/40 backdrop-blur-md text-center"
+              style={{ background: "hsl(var(--primary) / 0.15)" }}
+            >
+              <div className="text-[18px] font-semibold text-foreground">
+                Treino concluído! 💪
+              </div>
+              <div className="text-[12px] text-muted-foreground mt-1">
+                Excelente trabalho hoje.
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
