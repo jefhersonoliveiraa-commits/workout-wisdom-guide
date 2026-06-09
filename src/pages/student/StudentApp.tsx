@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { ClipboardList } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStudentPlan } from "@/hooks/useStudentPlan";
 import { useWorkoutState } from "@/hooks/useWorkoutState";
@@ -17,6 +18,7 @@ import { ProfilePage } from "@/components/workout/ProfilePage";
 import { HistoryPage } from "@/components/workout/HistoryPage";
 import { EvolutionPage } from "@/components/workout/EvolutionPage";
 import { WeighInModal } from "@/components/workout/WeighInModal";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { DbTrainingDay } from "@/types/plan";
 
 const getTodayDayIndex = () => {
