@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { loadHistory, getWeekHistory } from "@/lib/storage";
-import { Flame, Dumbbell, CalendarCheck } from "lucide-react";
+import { Flame, Dumbbell, CalendarCheck, CalendarX, Check, Circle, CircleDashed } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const DAY_LABELS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 
@@ -9,15 +10,40 @@ interface HistoryPageProps {
 }
 
 export function HistoryPage({ studentId }: HistoryPageProps) {
-  const { data: weekSessions = [] } = useQuery({
+  const { data: weekSessions = [], isLoading: weekLoading } = useQuery({
     queryKey: ['week-history', studentId],
     queryFn: () => getWeekHistory(studentId),
   });
 
-  const { data: allSessions = [] } = useQuery({
+  const { data: allSessions = [], isLoading: allLoading } = useQuery({
     queryKey: ['all-history', studentId],
     queryFn: () => loadHistory(studentId),
   });
+
+  const isLoading = weekLoading || allLoading;
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-3 w-24 rounded-md" />
+        <div className="grid grid-cols-7 gap-1 mb-4">
+          {Array.from({ length: 7 }).map((_, i) => (
+            <Skeleton key={i} className="h-[72px] rounded-xl" />
+          ))}
+        </div>
+        <Skeleton className="h-3 w-24 rounded-md" />
+        <div className="grid grid-cols-3 gap-2 mb-4">
+          <Skeleton className="h-[88px] rounded-xl" />
+          <Skeleton className="h-[88px] rounded-xl" />
+          <Skeleton className="h-[88px] rounded-xl" />
+        </div>
+        <Skeleton className="h-3 w-32 rounded-md" />
+        <Skeleton className="h-16 w-full rounded-xl" />
+        <Skeleton className="h-16 w-full rounded-xl" />
+        <Skeleton className="h-16 w-full rounded-xl" />
+      </div>
+    );
+  }
 
   const sortedSessions = [...allSessions].sort((a, b) => b.date.localeCompare(a.date));
 
@@ -50,11 +76,11 @@ export function HistoryPage({ studentId }: HistoryPageProps) {
             >
               <div className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wide">{label}</div>
               <div
-                className={`text-[18px] mt-1 leading-none ${
+                className={`flex items-center justify-center h-[18px] mt-1 ${
                   completed ? "text-primary" : partial ? "text-workout-yellow" : "text-muted-foreground/30"
                 }`}
               >
-                {completed ? "✓" : partial ? "◐" : "○"}
+                {completed ? <Check size={16} strokeWidth={3} /> : partial ? <CircleDashed size={16} /> : <Circle size={16} />}
               </div>
               <div className="text-[8px] text-muted-foreground mt-1">
                 {session ? `${session.exercisesCompleted}/${session.totalExercises}` : ""}
@@ -103,10 +129,11 @@ export function HistoryPage({ studentId }: HistoryPageProps) {
       </div>
 
       {sortedSessions.length === 0 && (
-        <div className="bg-bg2 border border-border rounded-xl p-6 text-center">
-          <div className="text-[28px] mb-2">📋</div>
-          <p className="text-[13px] text-muted-foreground">
-            Nenhum treino registrado ainda. Complete exercícios para ver seu histórico aqui!
+        <div className="bg-bg2 border border-border rounded-xl p-8 text-center flex flex-col items-center gap-3">
+          <CalendarX size={48} className="text-primary/40" />
+          <h3 className="text-[16px] font-semibold text-foreground">Nenhuma sessão registrada</h3>
+          <p className="text-[13px] text-muted-foreground leading-relaxed">
+            Complete seu primeiro treino para ver o histórico aqui.
           </p>
         </div>
       )}

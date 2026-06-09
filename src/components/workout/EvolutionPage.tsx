@@ -78,8 +78,11 @@ function BodyWeightSection({ studentId, onOpenWeighIn }: { studentId: string; on
       {isLoading ? (
         <Skeleton className="h-40 w-full" />
       ) : recent.length === 0 ? (
-        <div className="text-center py-6">
-          <p className="text-[12px] text-muted-foreground mb-3">Nenhum registro de peso ainda.</p>
+        <div className="flex flex-col items-center justify-center text-center py-8 gap-3">
+          <Scale size={36} className="text-primary/40" />
+          <p className="text-[13px] text-muted-foreground">
+            Nenhum registro de peso ainda.
+          </p>
           {onOpenWeighIn && (
             <Button size="sm" onClick={onOpenWeighIn}>Registrar peso</Button>
           )}
@@ -127,9 +130,12 @@ function BodyWeightSection({ studentId, onOpenWeighIn }: { studentId: string; on
               </AreaChart>
             </ResponsiveContainer>
           ) : (
-            <p className="text-[12px] text-muted-foreground text-center py-4">
-              Registre mais um peso para ver a evolução 📊
-            </p>
+            <div className="flex flex-col items-center justify-center text-center py-6 gap-3">
+              <Scale size={36} className="text-primary/40" />
+              <p className="text-[13px] text-muted-foreground">
+                Registre mais um peso para ver a evolução.
+              </p>
+            </div>
           )}
         </>
       )}
@@ -189,9 +195,12 @@ function WeeklyVolumeSection({ studentId, exercises }: { studentId: string; exer
       {isLoading ? (
         <Skeleton className="h-40 w-full" />
       ) : !hasAny ? (
-        <p className="text-[12px] text-muted-foreground text-center py-6">
-          Ainda sem sessões registradas. Treine e volte aqui 💪
-        </p>
+        <div className="flex flex-col items-center justify-center text-center py-8 gap-3">
+          <BarChart3 size={36} className="text-primary/40" />
+          <p className="text-[13px] text-muted-foreground">
+            Ainda sem sessões registradas. Treine e volte aqui.
+          </p>
+        </div>
       ) : (
         <ResponsiveContainer width="100%" height={160}>
           <BarChart data={weeks} margin={{ top: 10, right: 8, left: -16, bottom: 0 }}>
@@ -269,9 +278,12 @@ function PersonalRecordsSection({ studentId, exercises }: { studentId: string; e
           <Skeleton className="h-10 w-full" />
         </div>
       ) : records.length === 0 ? (
-        <p className="text-[12px] text-muted-foreground text-center py-6">
-          Nenhum recorde registrado ainda 🏆
-        </p>
+        <div className="flex flex-col items-center justify-center text-center py-8 gap-3">
+          <Trophy size={36} className="text-primary/40" />
+          <p className="text-[13px] text-muted-foreground">
+            Nenhum recorde registrado ainda.
+          </p>
+        </div>
       ) : (
         <ul className="divide-y divide-border">
           {records.map(r => (

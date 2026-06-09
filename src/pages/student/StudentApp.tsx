@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { ClipboardList, Bed, CheckCircle2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStudentPlan } from "@/hooks/useStudentPlan";
 import { useWorkoutState } from "@/hooks/useWorkoutState";
@@ -17,6 +18,7 @@ import { ProfilePage } from "@/components/workout/ProfilePage";
 import { HistoryPage } from "@/components/workout/HistoryPage";
 import { EvolutionPage } from "@/components/workout/EvolutionPage";
 import { WeighInModal } from "@/components/workout/WeighInModal";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { DbTrainingDay } from "@/types/plan";
 
 const getTodayDayIndex = () => {
@@ -115,9 +117,19 @@ export default function StudentApp() {
 
   if (planLoading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-3">
-        <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-        <p className="text-[13px] text-muted-foreground">Carregando sua ficha...</p>
+      <div className="flex flex-col h-full bg-background">
+        <TopBar />
+        <div className="flex-1 overflow-y-auto px-[14px] py-4 pb-[calc(80px+env(safe-area-inset-bottom))] scrollbar-none">
+          {/* Skeleton HeroCard */}
+          <Skeleton className="h-[140px] w-full rounded-xl mb-4" />
+          {/* Skeleton section label */}
+          <Skeleton className="h-3 w-24 rounded-md mb-[10px]" />
+          {/* Skeleton ExerciseCards */}
+          <Skeleton className="h-[120px] w-full rounded-xl mb-3" />
+          <Skeleton className="h-[100px] w-full rounded-xl mb-3" />
+          <Skeleton className="h-[110px] w-full rounded-xl" />
+        </div>
+        <BottomNav currentPage={currentPage} onPageChange={setCurrentPage} />
       </div>
     );
   }
@@ -127,10 +139,10 @@ export default function StudentApp() {
       <div className="min-h-screen flex flex-col bg-background">
         <TopBar />
         <div className="flex-1 flex flex-col items-center justify-center px-6 text-center gap-4">
-          <div className="text-[48px]">🏋️</div>
-          <h2 className="text-[18px] font-semibold text-foreground">Nenhuma ficha atribuída</h2>
+          <ClipboardList size={48} className="text-primary/40" />
+          <h2 className="text-[18px] font-semibold text-foreground">Nenhum plano atribuído ainda</h2>
           <p className="text-[13px] text-muted-foreground leading-relaxed">
-            Aguarde seu treinador criar e atribuir uma ficha de treino para você.
+            Aguarde seu professor adicionar um plano de treino para você.
           </p>
         </div>
       </div>
@@ -191,9 +203,9 @@ export default function StudentApp() {
             )}
 
             {day?.is_rest && (
-              <div className="bg-bg2 border border-border rounded-lg p-6 text-center">
-                <div className="text-[32px] mb-3">😴</div>
-                <h3 className="text-[16px] font-medium text-foreground mb-2">Dia de Descanso</h3>
+              <div className="bg-bg2 border border-border rounded-lg p-6 text-center flex flex-col items-center gap-3">
+                <Bed size={48} className="text-primary/40" />
+                <h3 className="text-[16px] font-medium text-foreground">Dia de Descanso</h3>
                 <p className="text-[13px] text-muted-foreground leading-relaxed">
                   Aproveite para recuperar. Considere mobilidade leve ou caminhada se quiser se mover.
                 </p>
@@ -278,8 +290,11 @@ export default function StudentApp() {
               className="relative px-6 py-4 rounded-2xl border border-primary/40 backdrop-blur-md text-center"
               style={{ background: "hsl(var(--primary) / 0.15)" }}
             >
-              <div className="text-[18px] font-semibold text-foreground">
-                Treino concluído! 💪
+              <div className="flex items-center gap-2 justify-center">
+                <CheckCircle2 size={20} className="text-lime" />
+                <span className="text-[18px] font-semibold text-foreground">
+                  Treino concluído!
+                </span>
               </div>
               <div className="text-[12px] text-muted-foreground mt-1">
                 Excelente trabalho hoje.
