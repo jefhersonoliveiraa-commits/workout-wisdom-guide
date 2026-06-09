@@ -78,8 +78,11 @@ function BodyWeightSection({ studentId, onOpenWeighIn }: { studentId: string; on
       {isLoading ? (
         <Skeleton className="h-40 w-full" />
       ) : recent.length === 0 ? (
-        <div className="text-center py-6">
-          <p className="text-[12px] text-muted-foreground mb-3">Nenhum registro de peso ainda.</p>
+        <div className="flex flex-col items-center justify-center text-center py-8 gap-3">
+          <Scale size={36} className="text-primary/40" />
+          <p className="text-[13px] text-muted-foreground">
+            Nenhum registro de peso ainda.
+          </p>
           {onOpenWeighIn && (
             <Button size="sm" onClick={onOpenWeighIn}>Registrar peso</Button>
           )}
