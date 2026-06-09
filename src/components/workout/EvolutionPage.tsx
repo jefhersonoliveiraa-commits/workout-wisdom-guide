@@ -130,9 +130,12 @@ function BodyWeightSection({ studentId, onOpenWeighIn }: { studentId: string; on
               </AreaChart>
             </ResponsiveContainer>
           ) : (
-            <p className="text-[12px] text-muted-foreground text-center py-4">
-              Registre mais um peso para ver a evolução 📊
-            </p>
+            <div className="flex flex-col items-center justify-center text-center py-6 gap-3">
+              <Scale size={36} className="text-primary/40" />
+              <p className="text-[13px] text-muted-foreground">
+                Registre mais um peso para ver a evolução.
+              </p>
+            </div>
           )}
         </>
       )}
