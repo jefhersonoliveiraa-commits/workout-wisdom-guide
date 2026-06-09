@@ -203,9 +203,9 @@ export default function StudentApp() {
             )}
 
             {day?.is_rest && (
-              <div className="bg-bg2 border border-border rounded-lg p-6 text-center">
-                <div className="text-[32px] mb-3">😴</div>
-                <h3 className="text-[16px] font-medium text-foreground mb-2">Dia de Descanso</h3>
+              <div className="bg-bg2 border border-border rounded-lg p-6 text-center flex flex-col items-center gap-3">
+                <Bed size={48} className="text-primary/40" />
+                <h3 className="text-[16px] font-medium text-foreground">Dia de Descanso</h3>
                 <p className="text-[13px] text-muted-foreground leading-relaxed">
                   Aproveite para recuperar. Considere mobilidade leve ou caminhada se quiser se mover.
                 </p>
