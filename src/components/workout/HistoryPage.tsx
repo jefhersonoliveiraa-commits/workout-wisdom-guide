@@ -22,6 +22,29 @@ export function HistoryPage({ studentId }: HistoryPageProps) {
 
   const isLoading = weekLoading || allLoading;
 
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-3 w-24 rounded-md" />
+        <div className="grid grid-cols-7 gap-1 mb-4">
+          {Array.from({ length: 7 }).map((_, i) => (
+            <Skeleton key={i} className="h-[72px] rounded-xl" />
+          ))}
+        </div>
+        <Skeleton className="h-3 w-24 rounded-md" />
+        <div className="grid grid-cols-3 gap-2 mb-4">
+          <Skeleton className="h-[88px] rounded-xl" />
+          <Skeleton className="h-[88px] rounded-xl" />
+          <Skeleton className="h-[88px] rounded-xl" />
+        </div>
+        <Skeleton className="h-3 w-32 rounded-md" />
+        <Skeleton className="h-16 w-full rounded-xl" />
+        <Skeleton className="h-16 w-full rounded-xl" />
+        <Skeleton className="h-16 w-full rounded-xl" />
+      </div>
+    );
+  }
+
   const sortedSessions = [...allSessions].sort((a, b) => b.date.localeCompare(a.date));
 
   const weekDays = Array.from({ length: 7 }, (_, i) => {
@@ -106,10 +129,11 @@ export function HistoryPage({ studentId }: HistoryPageProps) {
       </div>
 
       {sortedSessions.length === 0 && (
-        <div className="bg-bg2 border border-border rounded-xl p-6 text-center">
-          <div className="text-[28px] mb-2">📋</div>
-          <p className="text-[13px] text-muted-foreground">
-            Nenhum treino registrado ainda. Complete exercícios para ver seu histórico aqui!
+        <div className="bg-bg2 border border-border rounded-xl p-8 text-center flex flex-col items-center gap-3">
+          <CalendarX size={48} className="text-primary/40" />
+          <h3 className="text-[16px] font-semibold text-foreground">Nenhuma sessão registrada</h3>
+          <p className="text-[13px] text-muted-foreground leading-relaxed">
+            Complete seu primeiro treino para ver o histórico aqui.
           </p>
         </div>
       )}
