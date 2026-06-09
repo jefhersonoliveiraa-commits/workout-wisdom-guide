@@ -290,8 +290,11 @@ export default function StudentApp() {
               className="relative px-6 py-4 rounded-2xl border border-primary/40 backdrop-blur-md text-center"
               style={{ background: "hsl(var(--primary) / 0.15)" }}
             >
-              <div className="text-[18px] font-semibold text-foreground">
-                Treino concluído! 💪
+              <div className="flex items-center gap-2 justify-center">
+                <CheckCircle2 size={20} className="text-lime" />
+                <span className="text-[18px] font-semibold text-foreground">
+                  Treino concluído!
+                </span>
               </div>
               <div className="text-[12px] text-muted-foreground mt-1">
                 Excelente trabalho hoje.

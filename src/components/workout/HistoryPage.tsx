@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { loadHistory, getWeekHistory } from "@/lib/storage";
-import { Flame, Dumbbell, CalendarCheck, CalendarX } from "lucide-react";
+import { Flame, Dumbbell, CalendarCheck, CalendarX, Check, Circle, CircleDashed } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const DAY_LABELS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
