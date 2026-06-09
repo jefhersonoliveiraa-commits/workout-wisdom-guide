@@ -117,9 +117,19 @@ export default function StudentApp() {
 
   if (planLoading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-3">
-        <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-        <p className="text-[13px] text-muted-foreground">Carregando sua ficha...</p>
+      <div className="flex flex-col h-full bg-background">
+        <TopBar />
+        <div className="flex-1 overflow-y-auto px-[14px] py-4 pb-[calc(80px+env(safe-area-inset-bottom))] scrollbar-none">
+          {/* Skeleton HeroCard */}
+          <Skeleton className="h-[140px] w-full rounded-xl mb-4" />
+          {/* Skeleton section label */}
+          <Skeleton className="h-3 w-24 rounded-md mb-[10px]" />
+          {/* Skeleton ExerciseCards */}
+          <Skeleton className="h-[120px] w-full rounded-xl mb-3" />
+          <Skeleton className="h-[100px] w-full rounded-xl mb-3" />
+          <Skeleton className="h-[110px] w-full rounded-xl" />
+        </div>
+        <BottomNav currentPage={currentPage} onPageChange={setCurrentPage} />
       </div>
     );
   }
@@ -129,10 +139,10 @@ export default function StudentApp() {
       <div className="min-h-screen flex flex-col bg-background">
         <TopBar />
         <div className="flex-1 flex flex-col items-center justify-center px-6 text-center gap-4">
-          <div className="text-[48px]">🏋️</div>
-          <h2 className="text-[18px] font-semibold text-foreground">Nenhuma ficha atribuída</h2>
+          <ClipboardList size={48} className="text-primary/40" />
+          <h2 className="text-[18px] font-semibold text-foreground">Nenhum plano atribuído ainda</h2>
           <p className="text-[13px] text-muted-foreground leading-relaxed">
-            Aguarde seu treinador criar e atribuir uma ficha de treino para você.
+            Aguarde seu professor adicionar um plano de treino para você.
           </p>
         </div>
       </div>
