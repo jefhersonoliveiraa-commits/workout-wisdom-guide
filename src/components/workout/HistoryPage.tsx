@@ -10,15 +10,17 @@ interface HistoryPageProps {
 }
 
 export function HistoryPage({ studentId }: HistoryPageProps) {
-  const { data: weekSessions = [] } = useQuery({
+  const { data: weekSessions = [], isLoading: weekLoading } = useQuery({
     queryKey: ['week-history', studentId],
     queryFn: () => getWeekHistory(studentId),
   });
 
-  const { data: allSessions = [] } = useQuery({
+  const { data: allSessions = [], isLoading: allLoading } = useQuery({
     queryKey: ['all-history', studentId],
     queryFn: () => loadHistory(studentId),
   });
+
+  const isLoading = weekLoading || allLoading;
 
   const sortedSessions = [...allSessions].sort((a, b) => b.date.localeCompare(a.date));
 
