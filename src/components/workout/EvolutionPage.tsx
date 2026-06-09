@@ -278,9 +278,12 @@ function PersonalRecordsSection({ studentId, exercises }: { studentId: string; e
           <Skeleton className="h-10 w-full" />
         </div>
       ) : records.length === 0 ? (
-        <p className="text-[12px] text-muted-foreground text-center py-6">
-          Nenhum recorde registrado ainda 🏆
-        </p>
+        <div className="flex flex-col items-center justify-center text-center py-8 gap-3">
+          <Trophy size={36} className="text-primary/40" />
+          <p className="text-[13px] text-muted-foreground">
+            Nenhum recorde registrado ainda.
+          </p>
+        </div>
       ) : (
         <ul className="divide-y divide-border">
           {records.map(r => (
