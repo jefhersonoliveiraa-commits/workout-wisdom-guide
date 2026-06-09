@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ClipboardList } from "lucide-react";
+import { ClipboardList, Bed, CheckCircle2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStudentPlan } from "@/hooks/useStudentPlan";
 import { useWorkoutState } from "@/hooks/useWorkoutState";
