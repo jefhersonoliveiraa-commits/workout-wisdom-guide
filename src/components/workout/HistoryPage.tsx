@@ -76,11 +76,11 @@ export function HistoryPage({ studentId }: HistoryPageProps) {
             >
               <div className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wide">{label}</div>
               <div
-                className={`text-[18px] mt-1 leading-none ${
+                className={`flex items-center justify-center h-[18px] mt-1 ${
                   completed ? "text-primary" : partial ? "text-workout-yellow" : "text-muted-foreground/30"
                 }`}
               >
-                {completed ? "✓" : partial ? "◐" : "○"}
+                {completed ? <Check size={16} strokeWidth={3} /> : partial ? <CircleDashed size={16} /> : <Circle size={16} />}
               </div>
               <div className="text-[8px] text-muted-foreground mt-1">
                 {session ? `${session.exercisesCompleted}/${session.totalExercises}` : ""}
