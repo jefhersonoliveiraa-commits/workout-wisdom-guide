@@ -195,9 +195,12 @@ function WeeklyVolumeSection({ studentId, exercises }: { studentId: string; exer
       {isLoading ? (
         <Skeleton className="h-40 w-full" />
       ) : !hasAny ? (
-        <p className="text-[12px] text-muted-foreground text-center py-6">
-          Ainda sem sessões registradas. Treine e volte aqui 💪
-        </p>
+        <div className="flex flex-col items-center justify-center text-center py-8 gap-3">
+          <BarChart3 size={36} className="text-primary/40" />
+          <p className="text-[13px] text-muted-foreground">
+            Ainda sem sessões registradas. Treine e volte aqui.
+          </p>
+        </div>
       ) : (
         <ResponsiveContainer width="100%" height={160}>
           <BarChart data={weeks} margin={{ top: 10, right: 8, left: -16, bottom: 0 }}>
